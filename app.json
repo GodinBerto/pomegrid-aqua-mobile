@@ -3,13 +3,14 @@
     "name": "pomegrid-aqua-mobile",
     "slug": "pomegrid-aqua-mobile",
     "version": "1.0.0",
+    "scheme": "pomegrid-aqua-mobile",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/splash-icon.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#F2FCE2"
     },
     "ios": {
       "supportsTablet": true
@@ -24,7 +25,13 @@
       "predictiveBackGestureEnabled": false
     },
     "web": {
-      "favicon": "./assets/favicon.png"
-    }
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-font",
+      "expo-image",
+      "expo-web-browser"
+    ]
   }
 }
