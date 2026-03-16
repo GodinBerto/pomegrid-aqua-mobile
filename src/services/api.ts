@@ -71,11 +71,13 @@ export const SOCKET_BASE_URL = resolveSocketBaseUrl();
 export const buildApiUrl = (endpoint: string) => `${API_BASE_URL}${normalizeEndpoint(endpoint)}`;
 
 const readPersistedSession = async (): Promise<SessionTokens> => {
-  const lookup = await AsyncStorage.getMany([
+  const entries = await AsyncStorage.multiGet([
     ACCESS_TOKEN_STORAGE_KEY,
     REFRESH_TOKEN_STORAGE_KEY,
     CSRF_TOKEN_STORAGE_KEY,
   ]);
+  const lookup = Object.fromEntries(entries) as Record<string, string | null>;
+
   return {
     accessToken: lookup[ACCESS_TOKEN_STORAGE_KEY] || undefined,
     refreshToken: lookup[REFRESH_TOKEN_STORAGE_KEY] || undefined,
@@ -102,11 +104,11 @@ export const setAuthSession = async (accessToken: string, csrfToken?: string, re
   };
   refreshFailed = false;
 
-  await AsyncStorage.setMany({
-    [ACCESS_TOKEN_STORAGE_KEY]: accessToken,
-    [REFRESH_TOKEN_STORAGE_KEY]: refreshToken || "",
-    [CSRF_TOKEN_STORAGE_KEY]: csrfToken || "",
-  });
+  await AsyncStorage.multiSet([
+    [ACCESS_TOKEN_STORAGE_KEY, accessToken],
+    [REFRESH_TOKEN_STORAGE_KEY, refreshToken || ""],
+    [CSRF_TOKEN_STORAGE_KEY, csrfToken || ""],
+  ]);
 };
 
 export const clearAuthSession = async () => {
@@ -116,7 +118,7 @@ export const clearAuthSession = async () => {
     csrfToken: undefined,
   };
   refreshFailed = false;
-  await AsyncStorage.removeMany([
+  await AsyncStorage.multiRemove([
     ACCESS_TOKEN_STORAGE_KEY,
     REFRESH_TOKEN_STORAGE_KEY,
     CSRF_TOKEN_STORAGE_KEY,
