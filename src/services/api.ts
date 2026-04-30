@@ -1,4 +1,5 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { useAuthStore } from "@/store/authStore";
 import {
@@ -47,28 +48,95 @@ let activeRefreshRequest: Promise<boolean> | null = null;
 let refreshFailed = false;
 
 const normalizeEndpoint = (endpoint: string) => endpoint.replace(/^\/+/, "");
-const ensureTrailingSlash = (value: string) => (value.endsWith("/") ? value : `${value}/`);
+const ensureTrailingSlash = (value: string) =>
+  value.endsWith("/") ? value : `${value}/`;
+const stripWrappingQuotes = (value?: string) =>
+  value?.trim().replace(/^['"]|['"]$/g, "");
+const isLoopbackHost = (value: string) =>
+  ["localhost", "127.0.0.1", "0.0.0.0"].includes(value);
+
+const parseHostname = (value?: string | null) => {
+  if (!value) return undefined;
+
+  try {
+    const normalizedValue = value.includes("://") ? value : `http://${value}`;
+    return new URL(normalizedValue).hostname;
+  } catch {
+    return undefined;
+  }
+};
+
+const resolveExpoDevHost = () => {
+  const hostCandidates = [
+    Constants.expoConfig?.hostUri,
+    Constants.linkingUri,
+    Constants.experienceUrl,
+  ];
+
+  for (const candidate of hostCandidates) {
+    const hostname = parseHostname(candidate);
+    if (hostname && !isLoopbackHost(hostname)) {
+      return hostname;
+    }
+  }
+
+  return undefined;
+};
+
+const remapLoopbackUrl = (value: string) => {
+  try {
+    const parsed = new URL(value);
+    if (!isLoopbackHost(parsed.hostname) || Platform.OS === "web") return value;
+
+    const expoDevHost = resolveExpoDevHost();
+    if (expoDevHost) {
+      parsed.hostname = expoDevHost;
+      return parsed.toString();
+    }
+
+    if (Platform.OS === "android") {
+      parsed.hostname = "10.0.2.2";
+      return parsed.toString();
+    }
+
+    return value;
+  } catch {
+    return value;
+  }
+};
 
 const fallbackApiBaseUrl = () =>
-  Platform.OS === "android" ? "http://10.0.2.2:8000/api/v1/" : "http://127.0.0.1:8000/api/v1/";
+  Platform.OS === "android"
+    ? "https://pomegrid.pythonanywhere.com/api/v1/"
+    : "https://pomegrid.pythonanywhere.com/api/v1/";
 
-const resolveApiBaseUrl = () => ensureTrailingSlash(process.env.EXPO_PUBLIC_API_URL?.trim() || fallbackApiBaseUrl());
+const resolveApiBaseUrl = () =>
+  ensureTrailingSlash(
+    remapLoopbackUrl(
+      stripWrappingQuotes(process.env.EXPO_PUBLIC_API_URL) ||
+        fallbackApiBaseUrl(),
+    ),
+  );
 
 const resolveSocketBaseUrl = () => {
-  const explicitSocketUrl = process.env.EXPO_PUBLIC_SOCKET_URL?.trim();
-  if (explicitSocketUrl) return explicitSocketUrl;
+  const explicitSocketUrl = stripWrappingQuotes(
+    process.env.EXPO_PUBLIC_SOCKET_URL,
+  );
+  if (explicitSocketUrl)
+    return remapLoopbackUrl(explicitSocketUrl).replace(/\/+$/, "");
 
   try {
     return new URL(resolveApiBaseUrl()).origin;
   } catch {
-    return fallbackApiBaseUrl().replace(/\/api\/v1\/?$/, "");
+    return remapLoopbackUrl(fallbackApiBaseUrl()).replace(/\/api\/v1\/?$/, "");
   }
 };
 
 export const API_BASE_URL = resolveApiBaseUrl();
 export const SOCKET_BASE_URL = resolveSocketBaseUrl();
 
-export const buildApiUrl = (endpoint: string) => `${API_BASE_URL}${normalizeEndpoint(endpoint)}`;
+export const buildApiUrl = (endpoint: string) =>
+  `${API_BASE_URL}${normalizeEndpoint(endpoint)}`;
 
 const readPersistedSession = async (): Promise<SessionTokens> => {
   const entries = await AsyncStorage.multiGet([
@@ -93,10 +161,16 @@ export const getStoredSession = async () => {
 
 export const hasStoredSession = async () => {
   const session = await getStoredSession();
-  return Boolean(session.accessToken || session.refreshToken || session.csrfToken);
+  return Boolean(
+    session.accessToken || session.refreshToken || session.csrfToken,
+  );
 };
 
-export const setAuthSession = async (accessToken: string, csrfToken?: string, refreshToken?: string) => {
+export const setAuthSession = async (
+  accessToken: string,
+  csrfToken?: string,
+  refreshToken?: string,
+) => {
   inMemorySession = {
     accessToken,
     csrfToken,
@@ -147,11 +221,18 @@ const parseResponse = async <T>(response: Response) => {
   }
 };
 
-const shouldAttemptRefresh = async (statusCode: number, payload: Record<string, any> | null) => {
+const shouldAttemptRefresh = async (
+  statusCode: number,
+  payload: Record<string, any> | null,
+) => {
   if (![401, 403, 422].includes(statusCode)) return false;
 
   const session = await getStoredSession();
-  if (!session.accessToken && !session.refreshToken && !useAuthStore.getState().isAuthenticated) {
+  if (
+    !session.accessToken &&
+    !session.refreshToken &&
+    !useAuthStore.getState().isAuthenticated
+  ) {
     return false;
   }
 
@@ -163,7 +244,11 @@ const shouldAttemptRefresh = async (statusCode: number, payload: Record<string, 
   );
 };
 
-const buildHeaders = async (endpoint: string, isFormData: boolean, options: ApiRequestOptions) => {
+const buildHeaders = async (
+  endpoint: string,
+  isFormData: boolean,
+  options: ApiRequestOptions,
+) => {
   const headers = new Headers(options.headers);
   const normalizedEndpoint = normalizeEndpoint(endpoint);
   const session = await getStoredSession();
@@ -172,11 +257,19 @@ const buildHeaders = async (endpoint: string, isFormData: boolean, options: ApiR
     headers.set("Content-Type", "application/json");
   }
 
-  if (!options.skipAuth && normalizedEndpoint !== REFRESH_ENDPOINT && session.accessToken) {
+  if (
+    !options.skipAuth &&
+    normalizedEndpoint !== REFRESH_ENDPOINT &&
+    session.accessToken
+  ) {
     headers.set("Authorization", `Bearer ${session.accessToken}`);
   }
 
-  if (normalizedEndpoint === REFRESH_ENDPOINT && session.csrfToken && !headers.has("X-CSRF-TOKEN")) {
+  if (
+    normalizedEndpoint === REFRESH_ENDPOINT &&
+    session.csrfToken &&
+    !headers.has("X-CSRF-TOKEN")
+  ) {
     headers.set("X-CSRF-TOKEN", session.csrfToken);
   }
 
@@ -196,11 +289,18 @@ const performRequest = async (
     return await fetch(requestUrl, {
       method,
       headers: await buildHeaders(endpoint, isFormData, options),
-      body: body ? (isFormData ? (body as FormData) : JSON.stringify(body)) : undefined,
+      credentials: "include",
+      body: body
+        ? isFormData
+          ? (body as FormData)
+          : JSON.stringify(body)
+        : undefined,
     });
   } catch (error) {
     if (error instanceof TypeError) {
-      throw new Error(`Failed to reach API (${requestUrl}). Set EXPO_PUBLIC_API_URL if you're not using the local backend.`);
+      throw new Error(
+        `Failed to reach API (${requestUrl}). Check that your backend host is reachable from the device.`,
+      );
     }
 
     throw error;
@@ -208,7 +308,8 @@ const performRequest = async (
 };
 
 const extractRefreshPayload = (payload: Record<string, any> | null) => {
-  const nestedData = payload?.data && typeof payload.data === "object" ? payload.data : payload;
+  const nestedData =
+    payload?.data && typeof payload.data === "object" ? payload.data : payload;
 
   return {
     accessToken: nestedData?.access_token as string | undefined,
@@ -245,7 +346,11 @@ const refreshAccessToken = async () => {
         return false;
       }
 
-      await setAuthSession(refreshData.accessToken, refreshData.csrfToken, refreshData.refreshToken);
+      await setAuthSession(
+        refreshData.accessToken,
+        refreshData.csrfToken,
+        refreshData.refreshToken,
+      );
       return true;
     } catch {
       refreshFailed = true;
@@ -277,16 +382,32 @@ export const apiRequest = async <T>(
   const normalizedEndpoint = normalizeEndpoint(endpoint);
   const isRefreshEndpoint = normalizedEndpoint === REFRESH_ENDPOINT;
 
-  let response = await performRequest(endpoint, method, body, isFormData, options);
+  let response = await performRequest(
+    endpoint,
+    method,
+    body,
+    isFormData,
+    options,
+  );
 
   if (!response.ok) {
     const errorPayload = await safeParseJson(response);
 
-    if (!options.skipRefresh && !isRefreshEndpoint && (await shouldAttemptRefresh(response.status, errorPayload))) {
+    if (
+      !options.skipRefresh &&
+      !isRefreshEndpoint &&
+      (await shouldAttemptRefresh(response.status, errorPayload))
+    ) {
       const refreshed = await refreshAccessToken();
 
       if (refreshed) {
-        response = await performRequest(endpoint, method, body, isFormData, options);
+        response = await performRequest(
+          endpoint,
+          method,
+          body,
+          isFormData,
+          options,
+        );
         if (response.ok) {
           return parseResponse<T>(response);
         }
@@ -303,16 +424,28 @@ export const apiRequest = async <T>(
 };
 
 const pickUserFromPayload = (payload?: Record<string, any>) =>
-  (payload?.user as AuthenticatedUser | undefined) || (payload?.data as AuthenticatedUser | undefined);
+  (payload?.user as AuthenticatedUser | undefined) ||
+  (payload?.data as AuthenticatedUser | undefined);
 
-export const loginUser = async (payload: { email: string; password: string }) => {
+export const loginUser = async (payload: {
+  email: string;
+  password: string;
+}) => {
   try {
-    const response = await apiRequest<ApiEnvelope<Record<string, any>>>("auth/login", "POST", payload, false, {
-      skipAuth: true,
-    });
+    const response = await apiRequest<ApiEnvelope<Record<string, any>>>(
+      "auth/login",
+      "POST",
+      payload,
+      false,
+      {
+        skipAuth: true,
+      },
+    );
 
     const responseData =
-      response?.data && typeof response.data === "object" ? (response.data as Record<string, any>) : response;
+      response?.data && typeof response.data === "object"
+        ? (response.data as Record<string, any>)
+        : response;
     const accessToken = responseData?.access_token;
     const refreshToken = responseData?.refresh_token;
     const csrfToken = responseData?.csrf_token;
@@ -352,8 +485,11 @@ export const registerUser = async (payload: {
   password: string;
 }) => {
   try {
-    const full_name = `${payload.firstName.trim()} ${payload.lastName.trim()}`.trim();
-    const username = `${payload.firstName}.${payload.lastName}`.toLowerCase().replace(/[^a-z0-9.]+/g, "");
+    const full_name =
+      `${payload.firstName.trim()} ${payload.lastName.trim()}`.trim();
+    const username = `${payload.firstName}.${payload.lastName}`
+      .toLowerCase()
+      .replace(/[^a-z0-9.]+/g, "");
 
     const response = await apiRequest<ApiEnvelope<Record<string, any>>>(
       "auth/register",
@@ -374,7 +510,8 @@ export const registerUser = async (payload: {
 
     return {
       success: getResponseStatus(response) < 400,
-      message: response.message || "Registration successful. Continue with sign in.",
+      message:
+        response.message || "Registration successful. Continue with sign in.",
       status: getResponseStatus(response),
     };
   } catch (error) {
@@ -386,9 +523,13 @@ export const registerUser = async (payload: {
   }
 };
 
-export const getAuthMe = async (): Promise<ApiSingleResponse<AuthenticatedUser>> => {
+export const getAuthMe = async (): Promise<
+  ApiSingleResponse<AuthenticatedUser>
+> => {
   try {
-    const response = await apiRequest<ApiEnvelope<AuthenticatedUser | Record<string, any>>>("auth/me", "GET");
+    const response = await apiRequest<
+      ApiEnvelope<AuthenticatedUser | Record<string, any>>
+    >("auth/me", "GET");
     const payload = response?.data;
     const directUser =
       payload && typeof payload === "object" && "id" in payload
@@ -412,7 +553,8 @@ export const getAuthMe = async (): Promise<ApiSingleResponse<AuthenticatedUser>>
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to load your profile.",
+      message:
+        error instanceof Error ? error.message : "Unable to load your profile.",
       status: 500,
     };
   }
@@ -436,28 +578,39 @@ export const logoutUser = async () => {
 
 export const getProducts = async (): Promise<ApiListResponse<Product>> => {
   try {
-    const response = await apiRequest<ApiEnvelope<Product[]> | Product[]>("products/", "GET");
+    const response = await apiRequest<ApiEnvelope<Product[]> | Product[]>(
+      "products/",
+      "GET",
+    );
     const data = extractListData<Product>(response, ["data"]);
 
     return {
       success: true,
       data,
       message: extractMessage(response, "Products loaded"),
-      status: Array.isArray(response) ? 200 : getResponseStatus(response as ApiEnvelope),
+      status: Array.isArray(response)
+        ? 200
+        : getResponseStatus(response as ApiEnvelope),
     };
   } catch (error) {
     return {
       success: false,
       data: [],
-      message: error instanceof Error ? error.message : "Unable to fetch products.",
+      message:
+        error instanceof Error ? error.message : "Unable to fetch products.",
       status: 500,
     };
   }
 };
 
-export const getProduct = async (id: string | number): Promise<ApiSingleResponse<Product>> => {
+export const getProduct = async (
+  id: string | number,
+): Promise<ApiSingleResponse<Product>> => {
   try {
-    const response = await apiRequest<ApiEnvelope<Product>>(`products/${id}`, "GET");
+    const response = await apiRequest<ApiEnvelope<Product>>(
+      `products/${id}`,
+      "GET",
+    );
     const data = extractSingleData<Product>(response, ["data"]);
 
     return {
@@ -469,28 +622,38 @@ export const getProduct = async (id: string | number): Promise<ApiSingleResponse
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to fetch this product.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to fetch this product.",
       status: 500,
     };
   }
 };
 
-export const getFarmServices = async (): Promise<ApiListResponse<FarmService>> => {
+export const getFarmServices = async (): Promise<
+  ApiListResponse<FarmService>
+> => {
   try {
-    const response = await apiRequest<ApiEnvelope<FarmService[]> | FarmService[]>("services/", "GET");
+    const response = await apiRequest<
+      ApiEnvelope<FarmService[]> | FarmService[]
+    >("services/", "GET");
     const data = extractListData<FarmService>(response, ["data", "services"]);
 
     return {
       success: true,
       data,
       message: extractMessage(response, "Services loaded"),
-      status: Array.isArray(response) ? 200 : getResponseStatus(response as ApiEnvelope),
+      status: Array.isArray(response)
+        ? 200
+        : getResponseStatus(response as ApiEnvelope),
     };
   } catch (error) {
     return {
       success: false,
       data: [],
-      message: error instanceof Error ? error.message : "Unable to fetch services.",
+      message:
+        error instanceof Error ? error.message : "Unable to fetch services.",
       status: 500,
     };
   }
@@ -510,7 +673,8 @@ export const getCartItems = async (): Promise<ApiListResponse<CartItem>> => {
     return {
       success: false,
       data: [],
-      message: error instanceof Error ? error.message : "Unable to fetch your cart.",
+      message:
+        error instanceof Error ? error.message : "Unable to fetch your cart.",
       status: 500,
     };
   }
@@ -528,7 +692,10 @@ export const addToCart = async (payload: AddToCartPayload) => {
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to add this item to your cart.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to add this item to your cart.",
       status: 500,
     };
   }
@@ -536,7 +703,11 @@ export const addToCart = async (payload: AddToCartPayload) => {
 
 export const updateCartItem = async (cartId: string, quantity: number) => {
   try {
-    const response = await apiRequest<ApiEnvelope<CartItem>>(`carts/${cartId}`, "PUT", { quantity });
+    const response = await apiRequest<ApiEnvelope<CartItem>>(
+      `carts/${cartId}`,
+      "PUT",
+      { quantity },
+    );
 
     return {
       success: true,
@@ -547,7 +718,10 @@ export const updateCartItem = async (cartId: string, quantity: number) => {
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to update this cart item.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to update this cart item.",
       status: 500,
     };
   }
@@ -565,7 +739,8 @@ export const removeCartItem = async (cartId: number) => {
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to remove this item.",
+      message:
+        error instanceof Error ? error.message : "Unable to remove this item.",
       status: 500,
     };
   }
@@ -573,7 +748,10 @@ export const removeCartItem = async (cartId: number) => {
 
 export const getUserOrders = async (): Promise<ApiListResponse<Order>> => {
   try {
-    const response = await apiRequest<ApiEnvelope<Order[]>>("orders/get-user-orders", "GET");
+    const response = await apiRequest<ApiEnvelope<Order[]>>(
+      "orders/get-user-orders",
+      "GET",
+    );
 
     return {
       success: true,
@@ -585,7 +763,8 @@ export const getUserOrders = async (): Promise<ApiListResponse<Order>> => {
     return {
       success: false,
       data: [],
-      message: error instanceof Error ? error.message : "Unable to fetch your orders.",
+      message:
+        error instanceof Error ? error.message : "Unable to fetch your orders.",
       status: 500,
     };
   }
@@ -596,19 +775,31 @@ const normalizeOptionalText = (value?: string | null) => {
   return trimmedValue ? trimmedValue : undefined;
 };
 
-export const createOrder = async (payload: CreateOrderPayload): Promise<ApiSingleResponse<Order>> => {
+export const createOrder = async (
+  payload: CreateOrderPayload,
+): Promise<ApiSingleResponse<Order>> => {
   try {
-    const response = await apiRequest<ApiEnvelope<Order>>("orders/create-order", "POST", {
-      items: payload.items.map((item) => ({
-        product_id: Number(item.product_id),
-        quantity: Number(item.quantity),
-      })),
-      ...(normalizeOptionalText(payload.payment_method) ? { payment_method: normalizeOptionalText(payload.payment_method) } : {}),
-      ...(normalizeOptionalText(payload.shipping_address)
-        ? { shipping_address: normalizeOptionalText(payload.shipping_address) }
-        : {}),
-      ...(normalizeOptionalText(payload.notes) ? { notes: normalizeOptionalText(payload.notes) } : {}),
-    });
+    const response = await apiRequest<ApiEnvelope<Order>>(
+      "orders/create-order",
+      "POST",
+      {
+        items: payload.items.map((item) => ({
+          product_id: Number(item.product_id),
+          quantity: Number(item.quantity),
+        })),
+        ...(normalizeOptionalText(payload.payment_method)
+          ? { payment_method: normalizeOptionalText(payload.payment_method) }
+          : {}),
+        ...(normalizeOptionalText(payload.shipping_address)
+          ? {
+              shipping_address: normalizeOptionalText(payload.shipping_address),
+            }
+          : {}),
+        ...(normalizeOptionalText(payload.notes)
+          ? { notes: normalizeOptionalText(payload.notes) }
+          : {}),
+      },
+    );
 
     return {
       success: true,
@@ -619,7 +810,8 @@ export const createOrder = async (payload: CreateOrderPayload): Promise<ApiSingl
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to create this order.",
+      message:
+        error instanceof Error ? error.message : "Unable to create this order.",
       status: 500,
     };
   }
@@ -646,13 +838,16 @@ export const initializePayment = async (
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to start payment.",
+      message:
+        error instanceof Error ? error.message : "Unable to start payment.",
       status: 500,
     };
   }
 };
 
-export const verifyPayment = async (reference: string): Promise<ApiSingleResponse<PaymentRecord>> => {
+export const verifyPayment = async (
+  reference: string,
+): Promise<ApiSingleResponse<PaymentRecord>> => {
   try {
     const response = await apiRequest<ApiEnvelope<Record<string, any>>>(
       `payments/verify/${reference}`,
@@ -671,32 +866,46 @@ export const verifyPayment = async (reference: string): Promise<ApiSingleRespons
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to verify payment.",
+      message:
+        error instanceof Error ? error.message : "Unable to verify payment.",
       status: 500,
     };
   }
 };
 
-export const getSupportConversation = async (): Promise<ApiSingleResponse<ConversationRecord>> => {
+export const getSupportConversation = async (): Promise<
+  ApiSingleResponse<ConversationRecord>
+> => {
   try {
-    const response = await apiRequest<ApiEnvelope<Record<string, any>>>("user/messages/support/conversation", "GET");
+    const response = await apiRequest<ApiEnvelope<Record<string, any>>>(
+      "user/messages/support/conversation",
+      "GET",
+    );
 
     return {
       success: true,
-      data: extractSingleData<ConversationRecord>(response, ["conversation", "data"]),
+      data: extractSingleData<ConversationRecord>(response, [
+        "conversation",
+        "data",
+      ]),
       message: response.message || "Conversation loaded",
       status: getResponseStatus(response),
     };
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to fetch your support conversation.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to fetch your support conversation.",
       status: 500,
     };
   }
 };
 
-export const getSupportMessages = async (params: { page?: number; per_page?: number } = {}): Promise<ApiListResponse<MessageRecord>> => {
+export const getSupportMessages = async (
+  params: { page?: number; per_page?: number } = {},
+): Promise<ApiListResponse<MessageRecord>> => {
   try {
     const query = buildQueryString(params as Record<string, unknown>);
     const response = await apiRequest<ApiEnvelope<Record<string, any>>>(
@@ -721,13 +930,18 @@ export const getSupportMessages = async (params: { page?: number; per_page?: num
     return {
       success: false,
       data: [],
-      message: error instanceof Error ? error.message : "Unable to fetch support messages.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to fetch support messages.",
       status: 500,
     };
   }
 };
 
-export const sendSupportMessage = async (content: string): Promise<ApiSingleResponse<MessageRecord>> => {
+export const sendSupportMessage = async (
+  content: string,
+): Promise<ApiSingleResponse<MessageRecord>> => {
   try {
     const response = await apiRequest<ApiEnvelope<Record<string, any>>>(
       "user/messages/support/conversation/messages",
@@ -744,7 +958,8 @@ export const sendSupportMessage = async (content: string): Promise<ApiSingleResp
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to send your message.",
+      message:
+        error instanceof Error ? error.message : "Unable to send your message.",
       status: 500,
     };
   }
@@ -752,7 +967,10 @@ export const sendSupportMessage = async (content: string): Promise<ApiSingleResp
 
 export const markSupportConversationRead = async () => {
   try {
-    const response = await apiRequest<ApiEnvelope>("user/messages/support/conversation/read", "POST");
+    const response = await apiRequest<ApiEnvelope>(
+      "user/messages/support/conversation/read",
+      "POST",
+    );
 
     return {
       success: true,
@@ -762,10 +980,14 @@ export const markSupportConversationRead = async () => {
   } catch (error) {
     return {
       success: false,
-      message: error instanceof Error ? error.message : "Unable to update conversation status.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Unable to update conversation status.",
       status: 500,
     };
   }
 };
 
-export const getNormalizedUserType = (userType?: string) => normalizeUserType(userType);
+export const getNormalizedUserType = (userType?: string) =>
+  normalizeUserType(userType);

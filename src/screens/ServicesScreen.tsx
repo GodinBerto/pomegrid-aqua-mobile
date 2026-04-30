@@ -1,6 +1,7 @@
 import React from "react";
 import { Alert, View } from "react-native";
-import { GraduationCap, Settings, Users, Wrench } from "lucide-react-native";
+import { useNavigation } from "@react-navigation/native";
+import { Calculator, GraduationCap, Settings, Users, Wrench } from "lucide-react-native";
 import { AppText, Button, Card, LoadingState, Screen, SectionHeading, TextField } from "@/components/ui";
 import { useFarmServices } from "@/hooks/useAppData";
 import type { ServiceIconKey } from "@/types/domain";
@@ -14,6 +15,7 @@ const serviceIconMap: Record<ServiceIconKey, typeof Users> = {
 };
 
 export const ServicesScreen = () => {
+  const navigation = useNavigation<any>();
   const { data: services = [], isLoading, error } = useFarmServices();
   const [form, setForm] = React.useState({
     name: "",
@@ -49,6 +51,23 @@ export const ServicesScreen = () => {
         title="Professional aquaculture services"
         description="This screen mirrors the web app’s user-side services area with API-backed cards and a mobile request form."
       />
+
+      <Card className="gap-4 bg-secondary">
+        <View className="flex-row items-start gap-3">
+          <View className="h-12 w-12 items-center justify-center rounded-full bg-white">
+            <Calculator color={palette.primary} size={22} />
+          </View>
+          <View className="flex-1">
+            <AppText weight="bold" className="text-lg">
+              Need to size a pond first?
+            </AppText>
+            <AppText className="text-sm leading-6 text-brand-subtext">
+              Open the farm calculator to estimate stocking density, pond size, and feed before you submit a service request.
+            </AppText>
+          </View>
+        </View>
+        <Button onPress={() => navigation.navigate("Calculator")}>Open calculator</Button>
+      </Card>
 
       {isLoading ? (
         <LoadingState label="Loading services..." />

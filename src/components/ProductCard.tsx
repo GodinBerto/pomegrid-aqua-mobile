@@ -1,13 +1,13 @@
+import React from "react";
 import { Pressable, View } from "react-native";
-import { Image } from "expo-image";
 import { Star } from "lucide-react-native";
-import { getProductImageSource } from "@/constants/media";
+import { ProductMedia } from "@/components/ProductMedia";
 import { formatCurrency } from "@/lib/utils";
 import type { Product } from "@/types/domain";
 import { AppText, Badge, Button, Card } from "@/components/ui";
 import { palette } from "@/theme";
 
-export const ProductCard = ({
+const ProductCardComponent = ({
   product,
   onPress,
   onAddToCart,
@@ -18,11 +18,7 @@ export const ProductCard = ({
 }) => (
   <Pressable onPress={onPress} className="flex-1">
     <Card className="p-0 overflow-hidden">
-      <Image
-        source={getProductImageSource(product)}
-        style={{ width: "100%", height: 160 }}
-        contentFit="cover"
-      />
+      <ProductMedia product={product} height={160} compact />
       <View className="gap-3 p-4">
         <View className="flex-row items-center justify-between">
           <Badge label={product.category} />
@@ -58,3 +54,6 @@ export const ProductCard = ({
     </Card>
   </Pressable>
 );
+
+export const ProductCard = React.memo(ProductCardComponent);
+ProductCard.displayName = "ProductCard";

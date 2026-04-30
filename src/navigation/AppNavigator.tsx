@@ -18,6 +18,7 @@ import { AccountScreen } from "@/screens/AccountScreen";
 import { CartScreen } from "@/screens/CartScreen";
 import { ChatScreen } from "@/screens/ChatScreen";
 import { CheckoutScreen } from "@/screens/CheckoutScreen";
+import { CalculatorScreen } from "@/screens/CalculatorScreen";
 import { ContactScreen } from "@/screens/ContactScreen";
 import { HomeScreen } from "@/screens/HomeScreen";
 import { LoginScreen } from "@/screens/LoginScreen";
@@ -41,6 +42,7 @@ export type RootStackParamList = {
   About: undefined;
   Contact: undefined;
   Checkout: undefined;
+  Calculator: undefined;
   Login: undefined;
   Register: undefined;
 };
@@ -144,6 +146,7 @@ export const AppNavigator = () => (
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="Contact" component={ContactScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
+      <Stack.Screen name="Calculator" component={CalculatorScreen} options={{ title: "Farm calculator" }} />
       <Stack.Screen name="Login" component={LoginScreen} options={{ presentation: "modal", title: "Sign in" }} />
       <Stack.Screen
         name="Register"

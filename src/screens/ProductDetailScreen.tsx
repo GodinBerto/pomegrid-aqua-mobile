@@ -1,9 +1,8 @@
 import React from "react";
 import { Alert, Pressable, View } from "react-native";
-import { Image } from "expo-image";
 import { MessageCircle, Minus, Package, Plus, Ruler, Star } from "lucide-react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
-import { getProductImageSource } from "@/constants/media";
+import { ProductMedia } from "@/components/ProductMedia";
 import { AppText, Badge, Button, Card, LoadingState, Screen } from "@/components/ui";
 import { useAddToCartMutation, useProduct } from "@/hooks/useAppData";
 import { formatCurrency } from "@/lib/utils";
@@ -55,7 +54,7 @@ export const ProductDetailScreen = () => {
   return (
     <Screen contentContainerClassName="pt-2 gap-6">
       <Card className="p-0 overflow-hidden">
-        <Image source={getProductImageSource(product)} style={{ width: "100%", height: 260 }} contentFit="cover" />
+        <ProductMedia product={product} height={260} />
       </Card>
 
       <View className="gap-4">

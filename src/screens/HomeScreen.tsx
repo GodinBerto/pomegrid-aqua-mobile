@@ -1,9 +1,10 @@
-import { ScrollView, View } from "react-native";
+import React from "react";
+import { FlatList, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowRight, MessageCircle, Sprout, Truck, Wrench } from "lucide-react-native";
+import { ArrowRight, Calculator, MessageCircle, Sprout, Truck, Wrench } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
-import { marketingImages } from "@/constants/media";
+import { getCategoryArt, marketingImages } from "@/constants/media";
 import { ProductCard } from "@/components/ProductCard";
 import { AppText, Button, Card, LoadingState, Screen, SectionHeading } from "@/components/ui";
 import { useProducts } from "@/hooks/useAppData";
@@ -28,27 +29,22 @@ const categoryCards = [
   {
     title: "Fish",
     description: "Catfish, tilapia, fingerlings, and mature stock.",
-    image: marketingImages.catfish,
   },
   {
     title: "Live Stock",
     description: "Healthy livestock sourced for quality and consistency.",
-    image: marketingImages.livestock,
   },
   {
     title: "Vegetables",
     description: "Fresh harvests delivered straight from the farm.",
-    image: marketingImages.vegetables,
   },
   {
     title: "Fruits",
     description: "Juicy seasonal produce with reliable fulfillment.",
-    image: marketingImages.fruits,
   },
   {
     title: "Farm Equipment",
     description: "Pumps, tanks, and tools that keep farms running.",
-    image: marketingImages.equipment,
   },
 ];
 
@@ -74,11 +70,13 @@ export const HomeScreen = () => {
   const navigation = useNavigation<any>();
   const { data: products = [], isLoading } = useProducts();
 
-  const featuredProducts =
-    products.filter((product) => product.rating && (product.rating >= 4.8 || product.isFeatured)).slice(0, 6) ||
-    [];
+  const previewProducts = React.useMemo(() => {
+    const featuredProducts = products
+      .filter((product) => product.rating && (product.rating >= 4.8 || product.isFeatured))
+      .slice(0, 6);
 
-  const previewProducts = featuredProducts.length > 0 ? featuredProducts : products.slice(0, 6);
+    return featuredProducts.length > 0 ? featuredProducts : products.slice(0, 6);
+  }, [products]);
 
   return (
     <Screen contentContainerClassName="pt-2 gap-8">
@@ -115,26 +113,82 @@ export const HomeScreen = () => {
       <View>
         <SectionHeading title="Shop by category" description="Jump into the catalog with the filters users already know from the web app." />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
-          {categoryCards.map((category) => (
-            <Button
-              key={category.title}
-              variant="ghost"
-              className="mr-4 w-[220px] p-0"
-              onPress={() => navigation.navigate("Shop", { category: category.title })}
-            >
-              <Card className="w-full overflow-hidden p-0">
-                <Image source={category.image} style={{ width: "100%", height: 130 }} contentFit="cover" />
-                <View className="gap-2 p-4">
-                  <AppText weight="bold" className="text-lg">
-                    {category.title}
-                  </AppText>
-                  <AppText className="text-sm leading-6 text-brand-subtext">{category.description}</AppText>
-                </View>
-              </Card>
-            </Button>
-          ))}
+          {categoryCards.map((category) => {
+            const categoryArt = getCategoryArt(category.title);
+
+            return (
+              <Button
+                key={category.title}
+                variant="ghost"
+                className="mr-4 w-[220px] p-0"
+                onPress={() => navigation.navigate("Shop", { category: category.title })}
+              >
+                <Card className="w-full overflow-hidden p-0">
+                  <LinearGradient
+                    colors={categoryArt.colors}
+                    style={{ width: "100%", height: 130, justifyContent: "space-between", padding: 16 }}
+                  >
+                    <View className="self-start rounded-full bg-black/10 px-3 py-1.5">
+                      <AppText weight="semibold" className="text-xs uppercase tracking-[1.2px] text-white/90">
+                        {categoryArt.code}
+                      </AppText>
+                    </View>
+                    <AppText weight="bold" className="text-2xl text-white">
+                      {category.title}
+                    </AppText>
+                  </LinearGradient>
+                  <View className="gap-2 p-4">
+                    <AppText weight="bold" className="text-lg">
+                      {category.title}
+                    </AppText>
+                    <AppText className="text-sm leading-6 text-brand-subtext">{category.description}</AppText>
+                  </View>
+                </Card>
+              </Button>
+            );
+          })}
         </ScrollView>
       </View>
+
+      <Card className="overflow-hidden p-0">
+        <LinearGradient colors={["#113C17", "#2D7A3E"]} style={{ padding: 20 }}>
+          <View className="flex-row items-start justify-between gap-4">
+            <View className="flex-1">
+              <View className="self-start rounded-full bg-white/15 px-3 py-1.5">
+                <AppText weight="semibold" className="text-xs uppercase tracking-[1.2px] text-white/90">
+                  Farm Tool
+                </AppText>
+              </View>
+              <AppText weight="bold" className="mt-4 text-2xl leading-8 text-white">
+                Plan your pond before you buy
+              </AppText>
+              <AppText className="mt-2 text-sm leading-6 text-white/80">
+                Open the mobile calculator to estimate feed bags, stocking density, and pond size from the same logic used on the web app.
+              </AppText>
+            </View>
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-white/15">
+              <Calculator color="#FFFFFF" size={24} />
+            </View>
+          </View>
+
+          <View className="mt-5 flex-row gap-3">
+            <Button variant="secondary" className="flex-1" onPress={() => navigation.navigate("Calculator")}>
+              <AppText weight="semibold" className="text-primary">
+                Open calculator
+              </AppText>
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 border-white/30 bg-transparent"
+              onPress={() => navigation.navigate("Services")}
+            >
+              <AppText weight="semibold" className="text-white">
+                View services
+              </AppText>
+            </Button>
+          </View>
+        </LinearGradient>
+      </Card>
 
       <View className="gap-4">
         <SectionHeading
@@ -153,21 +207,36 @@ export const HomeScreen = () => {
         />
         {isLoading ? (
           <LoadingState label="Loading featured products..." />
+        ) : previewProducts.length === 0 ? (
+          <Card>
+            <AppText className="text-sm text-brand-subtext">No featured products are available yet.</AppText>
+          </Card>
         ) : (
-          <View className="gap-4">
-            {previewProducts.map((product) => (
-              <ProductCard
-                key={String(product.id)}
-                product={product}
-                onPress={() =>
-                  navigation.navigate("ProductDetails", {
-                    productId: String(product.id),
-                    title: product.title,
-                  })
-                }
-              />
-            ))}
-          </View>
+          <FlatList
+            data={previewProducts}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            removeClippedSubviews
+            initialNumToRender={2}
+            maxToRenderPerBatch={3}
+            windowSize={3}
+            keyExtractor={(product) => String(product.id)}
+            className="-mx-5"
+            contentContainerStyle={{ paddingHorizontal: 20 }}
+            renderItem={({ item: product, index }) => (
+              <View className="w-[280px]" style={{ marginRight: index === previewProducts.length - 1 ? 0 : 16 }}>
+                <ProductCard
+                  product={product}
+                  onPress={() =>
+                    navigation.navigate("ProductDetails", {
+                      productId: String(product.id),
+                      title: product.title,
+                    })
+                  }
+                />
+              </View>
+            )}
+          />
         )}
       </View>
 
