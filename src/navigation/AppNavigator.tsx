@@ -2,11 +2,13 @@ import { NavigationContainer } from "@react-navigation/native";
 import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import {
+  Calculator,
   Home,
   MessagesSquare,
+  Settings,
   ShoppingBag,
   ShoppingCart,
-  UserRound,
+  Wrench,
 } from "lucide-react-native";
 import { useCartQuery, useSupportConversation } from "@/hooks/useAppData";
 import { getConversationUnreadCount } from "@/lib/utils";
@@ -15,7 +17,6 @@ import { fontFamilies, navigationTheme, palette } from "@/theme";
 import type { ProductCategory } from "@/types/domain";
 import { AboutScreen } from "@/screens/AboutScreen";
 import { AccountScreen } from "@/screens/AccountScreen";
-import { CartScreen } from "@/screens/CartScreen";
 import { ChatScreen } from "@/screens/ChatScreen";
 import { CheckoutScreen } from "@/screens/CheckoutScreen";
 import { CalculatorScreen } from "@/screens/CalculatorScreen";
@@ -28,11 +29,11 @@ import { RegisterScreen } from "@/screens/RegisterScreen";
 import { ServicesScreen } from "@/screens/ServicesScreen";
 
 export type RootTabParamList = {
-  Home: undefined;
+  Explore: undefined;
   Shop: { category?: ProductCategory | "all" } | undefined;
-  Cart: undefined;
-  Chat: undefined;
-  Account: undefined;
+  Calculator: undefined;
+  Services: undefined;
+  Settings: undefined;
 };
 
 export type RootStackParamList = {
@@ -51,11 +52,11 @@ const Tab = createBottomTabNavigator<RootTabParamList>();
 const Stack = createNativeStackNavigator<RootStackParamList>();
 
 const iconMap = {
-  Home,
+  Explore: Home,
   Shop: ShoppingBag,
-  Cart: ShoppingCart,
-  Chat: MessagesSquare,
-  Account: UserRound,
+  Settings: Settings,
+  Calculator: Calculator,
+  Services: Wrench,
 } as const;
 
 const TabsNavigator = () => {
@@ -100,23 +101,23 @@ const TabsNavigator = () => {
         };
       }}
     >
-      <Tab.Screen name="Home" component={HomeScreen} />
+      <Tab.Screen name="Explore" component={HomeScreen} />
       <Tab.Screen name="Shop" component={ProductsScreen} />
       <Tab.Screen
-        name="Cart"
-        component={CartScreen}
+        name="Calculator"
+        component={CalculatorScreen}
         options={{
           tabBarBadge: cartCount > 0 ? cartCount : undefined,
         }}
       />
       <Tab.Screen
-        name="Chat"
-        component={ChatScreen}
+        name="Services"
+        component={ServicesScreen}
         options={{
           tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
         }}
       />
-      <Tab.Screen name="Account" component={AccountScreen} />
+      <Tab.Screen name="Settings" component={AccountScreen} />
     </Tab.Navigator>
   );
 };
