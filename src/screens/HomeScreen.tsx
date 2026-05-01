@@ -126,6 +126,7 @@ export const HomeScreen = () => {
       header={
         <WelcomeHeader
           title={firstName}
+          isAuthenticated={isAuthenticated}
           notificationCount={unreadCount}
           onSearchPress={() => navigation.navigate("Shop")}
           onNotificationPress={() =>
