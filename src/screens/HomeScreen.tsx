@@ -1,5 +1,5 @@
 import React from "react";
-import { FlatList, ScrollView, View } from "react-native";
+import { FlatList, ImageBackground, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -136,16 +136,16 @@ export const HomeScreen = () => {
       }
       contentContainerClassName="gap-8 pt-2"
     >
-      <SectionHeading
+      {/* <SectionHeading
         eyebrow="Pomegrid Aqua"
         title="Your farm shop, now mobile"
         description="Browse stock, services, orders, and support with the same green brand system as the web app."
-      />
+      /> */}
 
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        className="-ml-5 px-5"
+        className="-ml-5 px-5 mt-10"
       >
         {heroSlides.map((slide) => (
           <View
@@ -186,120 +186,10 @@ export const HomeScreen = () => {
         ))}
       </ScrollView>
 
-      <View>
-        <SectionHeading
-          title="Shop by category"
-          description="Jump into the catalog with the filters users already know from the web app."
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          className="-mx-5 px-5"
-        >
-          {categoryCards.map((category) => {
-            const categoryArt = getCategoryArt(category.title);
-
-            return (
-              <Button
-                key={category.title}
-                variant="ghost"
-                className="mr-4 w-[220px] p-0"
-                onPress={() =>
-                  navigation.navigate("Shop", { category: category.title })
-                }
-              >
-                <Card className="w-full overflow-hidden p-0">
-                  <LinearGradient
-                    colors={categoryArt.colors}
-                    style={{
-                      width: "100%",
-                      height: 130,
-                      justifyContent: "space-between",
-                      padding: 16,
-                    }}
-                  >
-                    <View className="self-start rounded-full bg-black/10 px-3 py-1.5">
-                      <AppText
-                        weight="semibold"
-                        className="text-xs uppercase tracking-[1.2px] text-white/90"
-                      >
-                        {categoryArt.code}
-                      </AppText>
-                    </View>
-                    <AppText weight="bold" className="text-2xl text-white">
-                      {category.title}
-                    </AppText>
-                  </LinearGradient>
-                  <View className="gap-2 p-4">
-                    <AppText weight="bold" className="text-lg">
-                      {category.title}
-                    </AppText>
-                    <AppText className="text-sm leading-6 text-brand-subtext">
-                      {category.description}
-                    </AppText>
-                  </View>
-                </Card>
-              </Button>
-            );
-          })}
-        </ScrollView>
-      </View>
-
-      <Card className="overflow-hidden p-0">
-        <LinearGradient colors={["#113C17", "#2D7A3E"]} style={{ padding: 20 }}>
-          <View className="flex-row items-start justify-between gap-4">
-            <View className="flex-1">
-              <View className="self-start rounded-full bg-white/15 px-3 py-1.5">
-                <AppText
-                  weight="semibold"
-                  className="text-xs uppercase tracking-[1.2px] text-white/90"
-                >
-                  Farm Tool
-                </AppText>
-              </View>
-              <AppText
-                weight="bold"
-                className="mt-4 text-2xl leading-8 text-white"
-              >
-                Plan your pond before you buy
-              </AppText>
-              <AppText className="mt-2 text-sm leading-6 text-white/80">
-                Open the mobile calculator to estimate feed bags, stocking
-                density, and pond size from the same logic used on the web app.
-              </AppText>
-            </View>
-            <View className="h-14 w-14 items-center justify-center rounded-full bg-white/15">
-              <Calculator color="#FFFFFF" size={24} />
-            </View>
-          </View>
-
-          <View className="mt-5 flex-row gap-3">
-            <Button
-              variant="secondary"
-              className="flex-1"
-              onPress={() => navigation.navigate("Calculator")}
-            >
-              <AppText weight="semibold" className="text-primary">
-                Open calculator
-              </AppText>
-            </Button>
-            <Button
-              variant="outline"
-              className="flex-1 border-white/30 bg-transparent"
-              onPress={() => navigation.navigate("Services")}
-            >
-              <AppText weight="semibold" className="text-white">
-                View services
-              </AppText>
-            </Button>
-          </View>
-        </LinearGradient>
-      </Card>
-
       <View className="gap-4">
         <SectionHeading
           title="Featured products"
-          description="A mobile-friendly slice of your storefront with cached data from React Query."
+          description=""
           action={
             <Button variant="ghost" onPress={() => navigation.navigate("Shop")}>
               <View className="flex-row items-center gap-2">
@@ -352,6 +242,63 @@ export const HomeScreen = () => {
           />
         )}
       </View>
+
+      <Card
+        className={`overflow-hidden p-0 bg-url('${marketingImages.calculator}') bg-no-repeat bg-cover`}
+      >
+        <ImageBackground
+          source={marketingImages.calculator}
+          resizeMode="cover"
+          style={{ padding: 20 }}
+        >
+          <View className="flex-row items-start justify-between gap-4">
+            <View className="flex-1">
+              <View className="self-start rounded-full bg-white/15 px-3 py-1.5">
+                <AppText
+                  weight="semibold"
+                  className="text-xs uppercase tracking-[1.2px] text-white/90"
+                >
+                  Farm Tool
+                </AppText>
+              </View>
+              <AppText
+                weight="bold"
+                className="mt-4 text-2xl leading-8 text-white"
+              >
+                Plan your pond before you buy
+              </AppText>
+              <AppText className="mt-2 text-sm leading-6 text-white/80">
+                Open the mobile calculator to estimate feed bags, stocking
+                density, and pond size from the same logic used on the web app.
+              </AppText>
+            </View>
+            <View className="h-14 w-14 items-center justify-center rounded-full bg-white/15">
+              <Calculator color="#FFFFFF" size={24} />
+            </View>
+          </View>
+
+          <View className="mt-5 flex-row gap-3">
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onPress={() => navigation.navigate("Calculator")}
+            >
+              <AppText weight="semibold" className="text-primary">
+                Open calculator
+              </AppText>
+            </Button>
+            <Button
+              variant="outline"
+              className="flex-1 border-white/30 bg-transparent"
+              onPress={() => navigation.navigate("Services")}
+            >
+              <AppText weight="semibold" className="text-white">
+                View services
+              </AppText>
+            </Button>
+          </View>
+        </ImageBackground>
+      </Card>
 
       <View className="gap-4">
         <SectionHeading

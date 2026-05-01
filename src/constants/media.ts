@@ -10,6 +10,7 @@ export const marketingImages = {
   fruits: require("../../assets/marketing/fruits.jpg"),
   vegetables: require("../../assets/marketing/vegitables-fruits-bg.jpg"),
   equipment: require("../../assets/marketing/waterpump.webp"),
+  calculator: require("../../assets/marketing/calculator-bg.png"),
 };
 
 export const categoryImageMap: Record<string, ImageSourcePropType> = {
@@ -18,6 +19,7 @@ export const categoryImageMap: Record<string, ImageSourcePropType> = {
   Vegetables: marketingImages.tilapia,
   Fruits: marketingImages.tilapia,
   "Farm Equipment": marketingImages.equipment,
+  Calculator: marketingImages.calculator,
 };
 
 const categoryArtMap = {

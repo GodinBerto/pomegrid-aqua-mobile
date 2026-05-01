@@ -61,8 +61,12 @@ const iconMap = {
 const TabsNavigator = () => {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const isBootstrapping = useAuthStore((state) => state.isBootstrapping);
-  const { data: cartItems = [] } = useCartQuery(isAuthenticated && !isBootstrapping);
-  const { data: supportConversation } = useSupportConversation(isAuthenticated && !isBootstrapping);
+  const { data: cartItems = [] } = useCartQuery(
+    isAuthenticated && !isBootstrapping,
+  );
+  const { data: supportConversation } = useSupportConversation(
+    isAuthenticated && !isBootstrapping,
+  );
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const unreadCount = getConversationUnreadCount(supportConversation);
@@ -126,6 +130,7 @@ export const AppNavigator = () => (
         headerStyle: {
           backgroundColor: palette.surface,
         },
+
         headerTitleStyle: {
           fontFamily: fontFamilies.bold,
         },
@@ -134,7 +139,11 @@ export const AppNavigator = () => (
         },
       }}
     >
-      <Stack.Screen name="Tabs" component={TabsNavigator} options={{ headerShown: false }} />
+      <Stack.Screen
+        name="Tabs"
+        component={TabsNavigator}
+        options={{ headerShown: false }}
+      />
       <Stack.Screen
         name="ProductDetails"
         component={ProductDetailScreen}
@@ -146,8 +155,23 @@ export const AppNavigator = () => (
       <Stack.Screen name="About" component={AboutScreen} />
       <Stack.Screen name="Contact" component={ContactScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
-      <Stack.Screen name="Calculator" component={CalculatorScreen} options={{ title: "Farm calculator" }} />
-      <Stack.Screen name="Login" component={LoginScreen} options={{ presentation: "modal", title: "Sign in" }} />
+      <Stack.Screen
+        name="Calculator"
+        component={CalculatorScreen}
+        options={{ title: "Farm calculator" }}
+      />
+      <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{
+          presentation: "modal",
+          title: "Sign in",
+          headerTitleStyle: {
+            fontFamily: fontFamilies.bold,
+            // paddingTop: 10,
+          },
+        }}
+      />
       <Stack.Screen
         name="Register"
         component={RegisterScreen}
