@@ -1,8 +1,21 @@
-import { ActivityIndicator, Pressable, ScrollView, Text, TextInput, View } from "react-native";
+import {
+  ActivityIndicator,
+  Pressable,
+  ScrollView,
+  Text,
+  TextInput,
+  View,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { LucideIcon } from "lucide-react-native";
-import { LogIn, UserPlus } from "lucide-react-native";
+import {
+  Bell,
+  LogIn,
+  MessageCircle,
+  Search,
+  UserPlus,
+} from "lucide-react-native";
 import { cn } from "@/lib/utils";
 import { fontFamilies, palette } from "@/theme";
 
@@ -36,12 +49,22 @@ export const Card = ({
   children,
   className,
 }: React.ComponentProps<typeof View>) => (
-  <View className={cn("rounded-[24px] border border-brand-line bg-brand-surface p-5 shadow-soft", className)}>
+  <View
+    className={cn(
+      "rounded-[24px] border border-brand-line bg-brand-surface p-5 shadow-soft",
+      className,
+    )}
+  >
     {children}
   </View>
 );
 
-type ButtonVariant = "primary" | "secondary" | "outline" | "ghost" | "destructive";
+type ButtonVariant =
+  | "primary"
+  | "secondary"
+  | "outline"
+  | "ghost"
+  | "destructive";
 type ButtonSize = "sm" | "md" | "lg";
 
 const buttonVariantClasses: Record<ButtonVariant, string> = {
@@ -92,7 +115,10 @@ export const Button = ({
     {...props}
   >
     {typeof children === "string" ? (
-      <AppText weight="semibold" className={cn("text-base", buttonTextClasses[variant], textClassName)}>
+      <AppText
+        weight="semibold"
+        className={cn("text-base", buttonTextClasses[variant], textClassName)}
+      >
         {children}
       </AppText>
     ) : (
@@ -106,20 +132,28 @@ export const Screen = ({
   scroll = true,
   className,
   contentContainerClassName,
+  header,
+  headerClassName,
 }: {
   children: React.ReactNode;
   scroll?: boolean;
   className?: string;
   contentContainerClassName?: string;
+  header?: React.ReactNode;
+  headerClassName?: string;
 }) => {
   if (scroll) {
     return (
       <SafeAreaView className={cn("flex-1 bg-background", className)}>
         <ScrollView
           className="flex-1"
-          contentContainerClassName={cn("px-5 pb-10", contentContainerClassName)}
+          contentContainerClassName={cn(
+            "px-5 pb-10",
+            contentContainerClassName,
+          )}
           showsVerticalScrollIndicator={false}
         >
+          {header ? <View className={headerClassName}>{header}</View> : null}
           {children}
         </ScrollView>
       </SafeAreaView>
@@ -128,10 +162,81 @@ export const Screen = ({
 
   return (
     <SafeAreaView className={cn("flex-1 bg-background px-5", className)}>
+      {header ? <View className={headerClassName}>{header}</View> : null}
       {children}
     </SafeAreaView>
   );
 };
+
+const HeaderIconButton = ({
+  icon: Icon,
+  accessibilityLabel,
+  hasNotification,
+  ...props
+}: React.ComponentProps<typeof Pressable> & {
+  icon: LucideIcon;
+  accessibilityLabel: string;
+  hasNotification?: boolean;
+}) => (
+  <Pressable
+    accessibilityRole="button"
+    accessibilityLabel={accessibilityLabel}
+    className="relative h-11 w-11 items-center justify-center rounded-full border border-brand-line bg-white"
+    {...props}
+  >
+    <Icon color={palette.ink} size={20} />
+    {hasNotification ? (
+      <View className="absolute right-2.5 top-2.5 h-2.5 w-2.5 rounded-full bg-primary" />
+    ) : null}
+  </Pressable>
+);
+
+export const WelcomeHeader = ({
+  title,
+  subtitle = "Welcome back!",
+  onSearchPress,
+  onNotificationPress,
+  notificationCount = 0,
+  isAutenticated = false,
+}: {
+  title: string;
+  subtitle?: string;
+  onSearchPress?: () => void;
+  onNotificationPress?: () => void;
+  notificationCount?: number;
+  isAutenticated?: boolean;
+}) => (
+  <View className="flex-row items-center justify-between gap-4">
+    <View className="flex-1">
+      {isAutenticated ? (
+        <View>
+          <AppText className="text-sm text-brand-subtext">{subtitle}</AppText>
+          <AppText weight="bold" className="mt-0.5 text-[30px] leading-9">
+            {title}
+          </AppText>
+        </View>
+      ) : null}
+    </View>
+    <View className="flex-row items-center gap-3">
+      <HeaderIconButton
+        icon={Search}
+        accessibilityLabel="Search products"
+        onPress={onSearchPress}
+      />
+      <HeaderIconButton
+        icon={Bell}
+        accessibilityLabel="Open notifications"
+        hasNotification={notificationCount > 0}
+        onPress={onNotificationPress}
+      />
+      <HeaderIconButton
+        icon={MessageCircle}
+        accessibilityLabel="Sign in"
+        onPress={onSearchPress}
+      />
+    </View>
+  </View>
+);
 
 export const SectionHeading = ({
   eyebrow,
@@ -147,7 +252,10 @@ export const SectionHeading = ({
   <View className="mb-5 flex-row items-end justify-between gap-4">
     <View className="flex-1">
       {eyebrow ? (
-        <AppText weight="semibold" className="mb-1 text-xs uppercase tracking-[1.4px] text-primary">
+        <AppText
+          weight="semibold"
+          className="mb-1 text-xs uppercase tracking-[1.4px] text-primary"
+        >
           {eyebrow}
         </AppText>
       ) : null}
@@ -155,7 +263,9 @@ export const SectionHeading = ({
         {title}
       </AppText>
       {description ? (
-        <AppText className="mt-2 text-sm leading-6 text-brand-subtext">{description}</AppText>
+        <AppText className="mt-2 text-sm leading-6 text-brand-subtext">
+          {description}
+        </AppText>
       ) : null}
     </View>
     {action}
@@ -237,7 +347,10 @@ export const Chip = ({
       active ? "border-primary bg-primary" : "border-brand-line bg-white",
     )}
   >
-    <AppText weight="semibold" className={cn("text-sm", active ? "text-white" : "text-brand-subtext")}>
+    <AppText
+      weight="semibold"
+      className={cn("text-sm", active ? "text-white" : "text-brand-subtext")}
+    >
       {label}
     </AppText>
   </Pressable>
@@ -277,7 +390,11 @@ export const LoadingState = ({ label = "Loading..." }: { label?: string }) => (
   </View>
 );
 
-export const FullScreenLoader = ({ label = "Loading..." }: { label?: string }) => (
+export const FullScreenLoader = ({
+  label = "Loading...",
+}: {
+  label?: string;
+}) => (
   <SafeAreaView className="flex-1 items-center justify-center bg-background px-6">
     <View className="items-center gap-5">
       <View className="h-20 w-20 items-center justify-center rounded-full bg-secondary">
@@ -287,7 +404,9 @@ export const FullScreenLoader = ({ label = "Loading..." }: { label?: string }) =
         <AppText weight="bold" className="text-2xl">
           Pomegrid Aqua
         </AppText>
-        <AppText className="text-center text-sm text-brand-subtext">{label}</AppText>
+        <AppText className="text-center text-sm text-brand-subtext">
+          {label}
+        </AppText>
       </View>
     </View>
   </SafeAreaView>
@@ -319,7 +438,10 @@ export const AuthPrompt = ({
               </AppText>
             </View>
           </Button>
-          <Button variant="outline" onPress={() => navigation.navigate("Register")}>
+          <Button
+            variant="outline"
+            onPress={() => navigation.navigate("Register")}
+          >
             <View className="flex-row items-center gap-2">
               <UserPlus color={palette.primary} size={18} />
               <AppText weight="semibold" className="text-primary">

@@ -2,26 +2,43 @@ import React from "react";
 import { FlatList, ScrollView, View } from "react-native";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
-import { ArrowRight, Calculator, MessageCircle, Sprout, Truck, Wrench } from "lucide-react-native";
+import {
+  ArrowRight,
+  Calculator,
+  MessageCircle,
+  Sprout,
+  Truck,
+  Wrench,
+} from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { getCategoryArt, marketingImages } from "@/constants/media";
 import { ProductCard } from "@/components/ProductCard";
-import { AppText, Button, Card, LoadingState, Screen, SectionHeading } from "@/components/ui";
-import { useProducts } from "@/hooks/useAppData";
+import {
+  AppText,
+  Button,
+  Card,
+  LoadingState,
+  Screen,
+  SectionHeading,
+  WelcomeHeader,
+} from "@/components/ui";
+import { useProducts, useSupportConversation } from "@/hooks/useAppData";
+import { getConversationUnreadCount } from "@/lib/utils";
+import { useAuthStore } from "@/store/authStore";
 import { palette } from "@/theme";
 
 const heroSlides = [
   {
-    title: "Premium Catfish",
+    title: "Fish",
     description: "Fingerlings and mature stock for fast, healthy farm growth.",
     image: marketingImages.catfish,
     category: "Fish",
   },
   {
-    title: "Healthy Tilapia",
-    description: "Reliable aquaculture stock with the support to match.",
-    image: marketingImages.tilapia,
-    category: "Fish",
+    title: "Farm Equipment",
+    description: "Pumps, tanks, and tools that keep farms running.",
+    image: marketingImages.equipment,
+    category: "Farm Equipment",
   },
 ];
 
@@ -51,57 +68,115 @@ const categoryCards = [
 const highlights = [
   {
     title: "Farm-ready quality",
-    description: "Products are curated for healthy stock, dependable equipment, and repeat orders.",
+    description:
+      "Products are curated for healthy stock, dependable equipment, and repeat orders.",
     icon: Sprout,
   },
   {
     title: "Reliable delivery",
-    description: "Order flows, chat, and checkout are streamlined for fast decision making.",
+    description:
+      "Order flows, chat, and checkout are streamlined for fast decision making.",
     icon: Truck,
   },
   {
     title: "Hands-on support",
-    description: "Live chat connects users directly with customer support when they need help.",
+    description:
+      "Live chat connects users directly with customer support when they need help.",
     icon: Wrench,
   },
 ];
 
 export const HomeScreen = () => {
   const navigation = useNavigation<any>();
+  const user = useAuthStore((state) => state.user);
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const { data: products = [], isLoading } = useProducts();
+  const { data: supportConversation } = useSupportConversation(isAuthenticated);
 
   const previewProducts = React.useMemo(() => {
     const featuredProducts = products
-      .filter((product) => product.rating && (product.rating >= 4.8 || product.isFeatured))
+      .filter(
+        (product) =>
+          product.rating && (product.rating >= 4.8 || product.isFeatured),
+      )
       .slice(0, 6);
 
-    return featuredProducts.length > 0 ? featuredProducts : products.slice(0, 6);
+    return featuredProducts.length > 0
+      ? featuredProducts
+      : products.slice(0, 6);
   }, [products]);
 
+  const firstName = React.useMemo(() => {
+    const fullName = user?.full_name?.trim();
+    if (fullName) return fullName.split(/\s+/)[0];
+
+    const username = user?.username?.trim();
+    if (username) return username.split(/[._\s-]+/)[0];
+
+    const email = user?.email?.trim();
+    if (email) return email.split("@")[0];
+
+    return "Farmer";
+  }, [user?.email, user?.full_name, user?.username]);
+
+  const unreadCount = getConversationUnreadCount(supportConversation);
+
   return (
-    <Screen contentContainerClassName="pt-2 gap-8">
+    <Screen
+      header={
+        <WelcomeHeader
+          title={firstName}
+          notificationCount={unreadCount}
+          onSearchPress={() => navigation.navigate("Shop")}
+          onNotificationPress={() =>
+            navigation.navigate(isAuthenticated ? "Chat" : "Account")
+          }
+        />
+      }
+      contentContainerClassName="gap-8 pt-2"
+    >
       <SectionHeading
-        eyebrow="Aqua Market"
+        eyebrow="Pomegrid Aqua"
         title="Your farm shop, now mobile"
         description="Browse stock, services, orders, and support with the same green brand system as the web app."
       />
 
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        className="-ml-5 px-5"
+      >
         {heroSlides.map((slide) => (
-          <View key={slide.title} className="mr-4 w-[320px] overflow-hidden rounded-[28px]">
-            <Image source={slide.image} style={{ width: "100%", height: 220 }} contentFit="cover" />
+          <View
+            key={slide.title}
+            className="mr-4 w-[320px] overflow-hidden rounded-[28px]"
+          >
+            <Image
+              source={slide.image}
+              style={{ width: "100%", height: 220 }}
+              contentFit="cover"
+            />
             <LinearGradient
               colors={["rgba(0,0,0,0.1)", "rgba(0,0,0,0.65)"]}
-              style={{ position: "absolute", inset: 0, justifyContent: "flex-end", padding: 20 }}
+              style={{
+                position: "absolute",
+                inset: 0,
+                justifyContent: "flex-end",
+                padding: 20,
+              }}
             >
               <AppText weight="bold" className="text-3xl leading-9 text-white">
                 {slide.title}
               </AppText>
-              <AppText className="mt-2 text-sm leading-6 text-white/90">{slide.description}</AppText>
+              <AppText className="mt-2 text-sm leading-6 text-white/90">
+                {slide.description}
+              </AppText>
               <Button
                 size="sm"
                 className="mt-5 self-start"
-                onPress={() => navigation.navigate("Shop", { category: slide.category })}
+                onPress={() =>
+                  navigation.navigate("Shop", { category: slide.category })
+                }
               >
                 Explore
               </Button>
@@ -111,8 +186,15 @@ export const HomeScreen = () => {
       </ScrollView>
 
       <View>
-        <SectionHeading title="Shop by category" description="Jump into the catalog with the filters users already know from the web app." />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
+        <SectionHeading
+          title="Shop by category"
+          description="Jump into the catalog with the filters users already know from the web app."
+        />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="-mx-5 px-5"
+        >
           {categoryCards.map((category) => {
             const categoryArt = getCategoryArt(category.title);
 
@@ -121,15 +203,25 @@ export const HomeScreen = () => {
                 key={category.title}
                 variant="ghost"
                 className="mr-4 w-[220px] p-0"
-                onPress={() => navigation.navigate("Shop", { category: category.title })}
+                onPress={() =>
+                  navigation.navigate("Shop", { category: category.title })
+                }
               >
                 <Card className="w-full overflow-hidden p-0">
                   <LinearGradient
                     colors={categoryArt.colors}
-                    style={{ width: "100%", height: 130, justifyContent: "space-between", padding: 16 }}
+                    style={{
+                      width: "100%",
+                      height: 130,
+                      justifyContent: "space-between",
+                      padding: 16,
+                    }}
                   >
                     <View className="self-start rounded-full bg-black/10 px-3 py-1.5">
-                      <AppText weight="semibold" className="text-xs uppercase tracking-[1.2px] text-white/90">
+                      <AppText
+                        weight="semibold"
+                        className="text-xs uppercase tracking-[1.2px] text-white/90"
+                      >
                         {categoryArt.code}
                       </AppText>
                     </View>
@@ -141,7 +233,9 @@ export const HomeScreen = () => {
                     <AppText weight="bold" className="text-lg">
                       {category.title}
                     </AppText>
-                    <AppText className="text-sm leading-6 text-brand-subtext">{category.description}</AppText>
+                    <AppText className="text-sm leading-6 text-brand-subtext">
+                      {category.description}
+                    </AppText>
                   </View>
                 </Card>
               </Button>
@@ -155,15 +249,22 @@ export const HomeScreen = () => {
           <View className="flex-row items-start justify-between gap-4">
             <View className="flex-1">
               <View className="self-start rounded-full bg-white/15 px-3 py-1.5">
-                <AppText weight="semibold" className="text-xs uppercase tracking-[1.2px] text-white/90">
+                <AppText
+                  weight="semibold"
+                  className="text-xs uppercase tracking-[1.2px] text-white/90"
+                >
                   Farm Tool
                 </AppText>
               </View>
-              <AppText weight="bold" className="mt-4 text-2xl leading-8 text-white">
+              <AppText
+                weight="bold"
+                className="mt-4 text-2xl leading-8 text-white"
+              >
                 Plan your pond before you buy
               </AppText>
               <AppText className="mt-2 text-sm leading-6 text-white/80">
-                Open the mobile calculator to estimate feed bags, stocking density, and pond size from the same logic used on the web app.
+                Open the mobile calculator to estimate feed bags, stocking
+                density, and pond size from the same logic used on the web app.
               </AppText>
             </View>
             <View className="h-14 w-14 items-center justify-center rounded-full bg-white/15">
@@ -172,7 +273,11 @@ export const HomeScreen = () => {
           </View>
 
           <View className="mt-5 flex-row gap-3">
-            <Button variant="secondary" className="flex-1" onPress={() => navigation.navigate("Calculator")}>
+            <Button
+              variant="secondary"
+              className="flex-1"
+              onPress={() => navigation.navigate("Calculator")}
+            >
               <AppText weight="semibold" className="text-primary">
                 Open calculator
               </AppText>
@@ -209,7 +314,9 @@ export const HomeScreen = () => {
           <LoadingState label="Loading featured products..." />
         ) : previewProducts.length === 0 ? (
           <Card>
-            <AppText className="text-sm text-brand-subtext">No featured products are available yet.</AppText>
+            <AppText className="text-sm text-brand-subtext">
+              No featured products are available yet.
+            </AppText>
           </Card>
         ) : (
           <FlatList
@@ -224,7 +331,12 @@ export const HomeScreen = () => {
             className="-mx-5"
             contentContainerStyle={{ paddingHorizontal: 20 }}
             renderItem={({ item: product, index }) => (
-              <View className="w-[280px]" style={{ marginRight: index === previewProducts.length - 1 ? 0 : 16 }}>
+              <View
+                className="w-[280px]"
+                style={{
+                  marginRight: index === previewProducts.length - 1 ? 0 : 16,
+                }}
+              >
                 <ProductCard
                   product={product}
                   onPress={() =>
@@ -241,7 +353,10 @@ export const HomeScreen = () => {
       </View>
 
       <View className="gap-4">
-        <SectionHeading title="Why users stay here" description="The mobile experience keeps the same business value while feeling native on smaller screens." />
+        <SectionHeading
+          title="Why users stay here"
+          description="The mobile experience keeps the same business value while feeling native on smaller screens."
+        />
         {highlights.map((highlight) => {
           const Icon = highlight.icon;
 
@@ -253,7 +368,9 @@ export const HomeScreen = () => {
               <AppText weight="bold" className="text-lg">
                 {highlight.title}
               </AppText>
-              <AppText className="text-sm leading-6 text-brand-subtext">{highlight.description}</AppText>
+              <AppText className="text-sm leading-6 text-brand-subtext">
+                {highlight.description}
+              </AppText>
             </Card>
           );
         })}
@@ -265,11 +382,16 @@ export const HomeScreen = () => {
             Need help before you order?
           </AppText>
           <AppText className="text-sm leading-6 text-white/80">
-            Start a live conversation with support, ask product questions, and keep the thread cached across sessions.
+            Start a live conversation with support, ask product questions, and
+            keep the thread cached across sessions.
           </AppText>
         </View>
         <View className="flex-row gap-3">
-          <Button variant="secondary" className="flex-1" onPress={() => navigation.navigate("Chat")}>
+          <Button
+            variant="secondary"
+            className="flex-1"
+            onPress={() => navigation.navigate("Chat")}
+          >
             <View className="flex-row items-center justify-center gap-2">
               <MessageCircle color={palette.primary} size={18} />
               <AppText weight="semibold" className="text-primary">

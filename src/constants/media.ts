@@ -49,6 +49,8 @@ const categoryArtMap = {
 } as const;
 
 export const getCategoryArt = (category?: string) =>
-  categoryArtMap[normalizeCategoryName(category) || "Fish"] || categoryArtMap.Fish;
+  categoryArtMap[normalizeCategoryName(category) || "Fish"] ||
+  categoryArtMap.Fish;
 
-export const getProductImageSource = (product?: Partial<Product>) => getPrimaryProductImage(product);
+export const getProductImageSource = (product?: Partial<Product>) =>
+  getPrimaryProductImage(product);
