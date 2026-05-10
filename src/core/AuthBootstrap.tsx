@@ -1,14 +1,17 @@
 import { useEffect } from "react";
 import { FullScreenLoader } from "@/components/ui";
-import { clearAuthSession, getAuthMe, hasStoredSession } from "@/services/api";
+import { clearAuthSession, hasStoredSession } from "@/services/api";
+import {
+  clearAuthenticatedUserState,
+  fetchCurrentUser,
+  syncAuthenticatedUser,
+} from "@/query";
 import { useAuthStore } from "@/store/authStore";
 
 export const AuthBootstrap = ({ children }: { children: React.ReactNode }) => {
   const hasHydrated = useAuthStore((state) => state.hasHydrated);
   const isBootstrapping = useAuthStore((state) => state.isBootstrapping);
   const setBootstrapping = useAuthStore((state) => state.setBootstrapping);
-  const setUser = useAuthStore((state) => state.setUser);
-  const signOutLocal = useAuthStore((state) => state.signOutLocal);
 
   useEffect(() => {
     if (!hasHydrated) return;
@@ -21,22 +24,20 @@ export const AuthBootstrap = ({ children }: { children: React.ReactNode }) => {
       const hasSession = await hasStoredSession();
       if (!hasSession) {
         if (!cancelled) {
-          signOutLocal();
+          clearAuthenticatedUserState();
         }
         return;
       }
 
-      const response = await getAuthMe();
+      try {
+        const user = await fetchCurrentUser();
 
-      if (cancelled) return;
+        if (cancelled) return;
 
-      if (response.success && response.data) {
-        setUser(response.data);
-        return;
+        syncAuthenticatedUser(user);
+      } catch {
+        await clearAuthSession();
       }
-
-      await clearAuthSession();
-      signOutLocal();
     };
 
     void bootstrapSession();
@@ -44,7 +45,7 @@ export const AuthBootstrap = ({ children }: { children: React.ReactNode }) => {
     return () => {
       cancelled = true;
     };
-  }, [hasHydrated, setBootstrapping, setUser, signOutLocal]);
+  }, [hasHydrated, setBootstrapping]);
 
   if (!hasHydrated || isBootstrapping) {
     return <FullScreenLoader label="Syncing your profile and cache..." />;

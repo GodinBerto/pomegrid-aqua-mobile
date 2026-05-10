@@ -1,6 +1,7 @@
 import { ScrollView, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { cn } from "@/lib/utils";
+import { AppPageHeader } from "./header/AppPageHeader";
 
 export const Screen = ({
   children,
@@ -9,6 +10,9 @@ export const Screen = ({
   contentContainerClassName,
   header,
   headerClassName,
+  showAppHeader = true,
+  appHeaderTitle,
+  appHeaderSubtitle,
 }: {
   children: React.ReactNode;
   scroll?: boolean;
@@ -16,6 +20,9 @@ export const Screen = ({
   contentContainerClassName?: string;
   header?: React.ReactNode;
   headerClassName?: string;
+  showAppHeader?: boolean;
+  appHeaderTitle?: string;
+  appHeaderSubtitle?: string;
 }) => {
   if (scroll) {
     return (
@@ -28,6 +35,12 @@ export const Screen = ({
           )}
           showsVerticalScrollIndicator={false}
         >
+          {showAppHeader ? (
+            <AppPageHeader
+              title={appHeaderTitle}
+              subtitle={appHeaderSubtitle}
+            />
+          ) : null}
           {header ? <View className={headerClassName}>{header}</View> : null}
           {children}
         </ScrollView>
@@ -37,6 +50,9 @@ export const Screen = ({
 
   return (
     <SafeAreaView className={cn("flex-1 bg-background px-5", className)}>
+      {showAppHeader ? (
+        <AppPageHeader title={appHeaderTitle} subtitle={appHeaderSubtitle} />
+      ) : null}
       {header ? <View className={headerClassName}>{header}</View> : null}
       {children}
     </SafeAreaView>

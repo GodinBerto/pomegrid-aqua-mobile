@@ -1,10 +1,5 @@
-import { AppState } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
-import { QueryClient, focusManager, onlineManager } from "@tanstack/react-query";
-import { createAsyncStoragePersister } from "@tanstack/query-async-storage-persister";
 import { useFonts } from "expo-font";
-import * as Network from "expo-network";
 import * as SystemUI from "expo-system-ui";
 import * as WebBrowser from "expo-web-browser";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
@@ -19,46 +14,14 @@ import {
 import { FullScreenLoader } from "@/components/ui";
 import { AuthBootstrap } from "@/core/AuthBootstrap";
 import { AppNavigator } from "@/navigation/AppNavigator";
+import {
+  initializeQueryClientLifecycle,
+  persistedQueryClientOptions,
+  queryClient,
+} from "@/query";
 import { palette } from "@/theme";
 
 WebBrowser.maybeCompleteAuthSession();
-
-const queryClient = new QueryClient({
-  defaultOptions: {
-    queries: {
-      gcTime: 1000 * 60 * 60 * 24,
-      staleTime: 1000 * 60 * 2,
-      retry: (failureCount, error) => {
-        const message = error instanceof Error ? error.message.toLowerCase() : "";
-        if (message.includes("failed to reach api") || message.includes("session expired")) {
-          return false;
-        }
-        return failureCount < 1;
-      },
-    },
-  },
-});
-
-const persister = createAsyncStoragePersister({
-  storage: AsyncStorage,
-  key: "pomegrid-react-query-cache",
-});
-
-focusManager.setEventListener((handleFocus) => {
-  const subscription = AppState.addEventListener("change", (state) => {
-    handleFocus(state === "active");
-  });
-
-  return () => subscription.remove();
-});
-
-onlineManager.setEventListener((setOnline) => {
-  const subscription = Network.addNetworkStateListener((state) => {
-    setOnline(Boolean(state.isConnected ?? state.isInternetReachable));
-  });
-
-  return () => subscription.remove();
-});
 
 export const AppRoot = () => {
   const [fontsLoaded] = useFonts({
@@ -70,6 +33,7 @@ export const AppRoot = () => {
   });
 
   void SystemUI.setBackgroundColorAsync(palette.canvas);
+  initializeQueryClientLifecycle();
 
   if (!fontsLoaded) {
     return <FullScreenLoader label="Loading your storefront..." />;
@@ -80,10 +44,7 @@ export const AppRoot = () => {
       <SafeAreaProvider>
         <PersistQueryClientProvider
           client={queryClient}
-          persistOptions={{
-            persister,
-            maxAge: 1000 * 60 * 60 * 24,
-          }}
+          persistOptions={persistedQueryClientOptions}
         >
           <AuthBootstrap>
             <AppNavigator />

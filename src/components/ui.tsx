@@ -11,6 +11,6 @@ export { LoadingState } from "./ui/LoadingState";
 export { Screen } from "./ui/Screen";
 export { SectionHeading } from "./ui/SectionHeading";
 export { TextField } from "./ui/TextField";
+export { AppPageHeader } from "./ui/header/AppPageHeader";
 export { HeaderIconButton } from "./ui/header/HeaderIconButton";
-export { WelcomeHeader } from "./ui/header/WelcomeHeader";
 export { UserProfileHeader } from "./ui/user/UserProfileHeader";

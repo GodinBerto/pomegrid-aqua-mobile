@@ -4,19 +4,15 @@ import { createNativeStackNavigator } from "@react-navigation/native-stack";
 import {
   Calculator,
   Home,
-  MessagesSquare,
   Settings,
   ShoppingBag,
-  ShoppingCart,
   Wrench,
 } from "lucide-react-native";
-import { useCartQuery, useSupportConversation } from "@/hooks/useAppData";
-import { getConversationUnreadCount } from "@/lib/utils";
-import { useAuthStore } from "@/store/authStore";
 import { fontFamilies, navigationTheme, palette } from "@/theme";
 import type { ProductCategory } from "@/types/domain";
 import { AboutScreen } from "@/app/screens/AboutScreen";
 import { AccountScreen } from "@/app/screens/AccountScreen";
+import { CartScreen } from "@/app/screens/CartScreen";
 import { ChatScreen } from "@/app/screens/ChatScreen";
 import { CheckoutScreen } from "@/app/screens/CheckoutScreen";
 import { CalculatorScreen } from "@/app/screens/CalculatorScreen";
@@ -39,11 +35,11 @@ export type RootTabParamList = {
 export type RootStackParamList = {
   Tabs: undefined;
   ProductDetails: { productId: string; title?: string };
-  Services: undefined;
   About: undefined;
   Contact: undefined;
+  Cart: undefined;
   Checkout: undefined;
-  Calculator: undefined;
+  Chat: undefined;
   Login: undefined;
   Register: undefined;
 };
@@ -60,18 +56,6 @@ const iconMap = {
 } as const;
 
 const TabsNavigator = () => {
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
-  const isBootstrapping = useAuthStore((state) => state.isBootstrapping);
-  const { data: cartItems = [] } = useCartQuery(
-    isAuthenticated && !isBootstrapping,
-  );
-  const { data: supportConversation } = useSupportConversation(
-    isAuthenticated && !isBootstrapping,
-  );
-
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const unreadCount = getConversationUnreadCount(supportConversation);
-
   return (
     <Tab.Navigator
       screenOptions={({ route }) => {
@@ -103,20 +87,8 @@ const TabsNavigator = () => {
     >
       <Tab.Screen name="Explore" component={HomeScreen} />
       <Tab.Screen name="Shop" component={ProductsScreen} />
-      <Tab.Screen
-        name="Calculator"
-        component={CalculatorScreen}
-        options={{
-          tabBarBadge: cartCount > 0 ? cartCount : undefined,
-        }}
-      />
-      <Tab.Screen
-        name="Services"
-        component={ServicesScreen}
-        options={{
-          tabBarBadge: unreadCount > 0 ? unreadCount : undefined,
-        }}
-      />
+      <Tab.Screen name="Calculator" component={CalculatorScreen} />
+      <Tab.Screen name="Services" component={ServicesScreen} />
       <Tab.Screen name="Settings" component={AccountScreen} />
     </Tab.Navigator>
   );
@@ -152,15 +124,15 @@ export const AppNavigator = () => (
           title: route.params?.title || "Product details",
         })}
       />
-      <Stack.Screen name="Services" component={ServicesScreen} />
       <Stack.Screen name="About" component={AboutScreen} />
+      <Stack.Screen name="Cart" component={CartScreen} />
+      <Stack.Screen
+        name="Chat"
+        component={ChatScreen}
+        options={{ title: "Support" }}
+      />
       <Stack.Screen name="Contact" component={ContactScreen} />
       <Stack.Screen name="Checkout" component={CheckoutScreen} />
-      <Stack.Screen
-        name="Calculator"
-        component={CalculatorScreen}
-        options={{ title: "Farm calculator" }}
-      />
       <Stack.Screen
         name="Login"
         component={LoginScreen}

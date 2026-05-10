@@ -1,6 +1,7 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
+import { clearAuthenticatedQueryCache } from "@/query/cache";
 import { useAuthStore } from "@/store/authStore";
 import {
   buildQueryString,
@@ -198,6 +199,7 @@ export const clearAuthSession = async () => {
     REFRESH_TOKEN_STORAGE_KEY,
     CSRF_TOKEN_STORAGE_KEY,
   ]);
+  clearAuthenticatedQueryCache();
   useAuthStore.getState().signOutLocal();
 };
 

@@ -12,16 +12,15 @@ import {
   SectionHeading,
   TextField,
 } from "@/components/ui";
-import { useAddToCartMutation, useProducts } from "@/hooks/useAppData";
+import { useAddToCartMutation, useProducts, useSessionUser } from "@/query";
 import { normalizeCategoryName } from "@/lib/utils";
-import { useAuthStore } from "@/store/authStore";
 
 type SortOption = "featured" | "price-asc" | "price-desc" | "name-asc";
 
 export const ProductsScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated } = useSessionUser();
   const { data: products = [], isLoading, error } = useProducts();
   const addToCartMutation = useAddToCartMutation();
   const [activeCategory, setActiveCategory] = React.useState<string>("all");

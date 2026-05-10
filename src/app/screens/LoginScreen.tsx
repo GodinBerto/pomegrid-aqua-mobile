@@ -2,8 +2,6 @@ import React from "react";
 import { Alert, View } from "react-native";
 import { Eye, EyeOff, LogIn } from "lucide-react-native";
 import { useNavigation } from "@react-navigation/native";
-import { loginUser } from "@/services/api";
-import { useAuthStore } from "@/store/authStore";
 import {
   AppText,
   Button,
@@ -12,15 +10,15 @@ import {
   SectionHeading,
   TextField,
 } from "@/components/ui";
+import { useLoginMutation } from "@/query";
 import { palette } from "@/theme";
 
 export const LoginScreen = () => {
   const navigation = useNavigation<any>();
-  const setUser = useAuthStore((state) => state.setUser);
+  const loginMutation = useLoginMutation();
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
   const [showPassword, setShowPassword] = React.useState(false);
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -28,16 +26,13 @@ export const LoginScreen = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    const response = await loginUser({ email, password });
-    setIsSubmitting(false);
+    const response = await loginMutation.mutateAsync({ email, password });
 
     if (!response.success || !response.data) {
       Alert.alert("Sign in failed", response.message || "Please try again.");
       return;
     }
 
-    setUser(response.data);
     if (navigation.canGoBack()) {
       navigation.goBack();
       return;
@@ -48,8 +43,8 @@ export const LoginScreen = () => {
 
   return (
     <Screen
+      showAppHeader={false}
       contentContainerClassName="justify-center flex-grow py-8"
-      headerClassName=""
     >
       <Card className="gap-5">
         <SectionHeading
@@ -89,11 +84,11 @@ export const LoginScreen = () => {
             </View>
           </Button>
         </View>
-        <Button onPress={handleLogin} disabled={isSubmitting}>
+        <Button onPress={handleLogin} disabled={loginMutation.isPending}>
           <View className="flex-row items-center gap-2">
             <LogIn color="#FFFFFF" size={18} />
             <AppText weight="semibold" className="text-white">
-              {isSubmitting ? "Signing in..." : "Sign in"}
+              {loginMutation.isPending ? "Signing in..." : "Sign in"}
             </AppText>
           </View>
         </Button>

@@ -4,16 +4,14 @@ import { ArrowRight, Bell, Globe2, LogOut, Mail, Settings2, UserRound } from "lu
 import { useNavigation } from "@react-navigation/native";
 import { OrderCard } from "@/components/OrderCard";
 import { AppText, AuthPrompt, Badge, Button, Card, LoadingState, Screen, SectionHeading } from "@/components/ui";
-import { useLogoutMutation, useOrdersQuery } from "@/hooks/useAppData";
+import { useLogoutMutation, useOrdersQuery, useSessionUser } from "@/query";
 import { formatDate } from "@/lib/utils";
-import { useAuthStore } from "@/store/authStore";
 import { usePreferencesStore } from "@/store/preferencesStore";
 import { palette } from "@/theme";
 
 export const AccountScreen = () => {
   const navigation = useNavigation<any>();
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { user, isAuthenticated } = useSessionUser();
   const { data: orders = [], isLoading } = useOrdersQuery(isAuthenticated);
   const logoutMutation = useLogoutMutation();
   const [expandedOrderId, setExpandedOrderId] = React.useState<number | null>(null);
@@ -33,7 +31,7 @@ export const AccountScreen = () => {
 
   if (!isAuthenticated || !user) {
     return (
-      <Screen contentContainerClassName="pt-8 gap-4">
+      <Screen showAppHeader={false} contentContainerClassName="pt-8 gap-4">
         <AuthPrompt
           title="Your profile lives here"
           description="Sign in to see orders, account details, preferences, and your cached session state."
@@ -54,7 +52,7 @@ export const AccountScreen = () => {
   }
 
   return (
-    <Screen contentContainerClassName="pt-2 gap-6">
+    <Screen showAppHeader={false} contentContainerClassName="pt-2 gap-6">
       <SectionHeading
         eyebrow="Account"
         title={user.full_name}

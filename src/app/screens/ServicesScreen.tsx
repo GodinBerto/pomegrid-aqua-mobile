@@ -3,7 +3,7 @@ import { Alert, View } from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import { Calculator, GraduationCap, Settings, Users, Wrench } from "lucide-react-native";
 import { AppText, Button, Card, LoadingState, Screen, SectionHeading, TextField } from "@/components/ui";
-import { useFarmServices } from "@/hooks/useAppData";
+import { useFarmServices } from "@/query";
 import type { ServiceIconKey } from "@/types/domain";
 import { palette } from "@/theme";
 

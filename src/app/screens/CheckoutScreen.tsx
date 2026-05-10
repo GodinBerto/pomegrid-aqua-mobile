@@ -22,9 +22,8 @@ import {
   TextField,
 } from "@/components/ui";
 import { createOrder, initializePayment, removeCartItem, verifyPayment } from "@/services/api";
-import { useCartQuery } from "@/hooks/useAppData";
+import { useCartQuery, useSessionUser } from "@/query";
 import { formatCurrency } from "@/lib/utils";
-import { useAuthStore } from "@/store/authStore";
 import { defaultCheckoutForm, useCheckoutStore } from "@/store/checkoutStore";
 import type { MobileProvider } from "@/types/domain";
 import { formatPaymentMethodLabel, isPhysicalPaymentMethod, isSuccessfulGatewayPayment } from "@/lib/payment";
@@ -53,7 +52,7 @@ const buildOrderNotes = (form: typeof defaultCheckoutForm, mobileProvider: Mobil
 export const CheckoutScreen = () => {
   const navigation = useNavigation<any>();
   const queryClient = useQueryClient();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated } = useSessionUser();
   const { data: cartItems = [], isLoading } = useCartQuery(isAuthenticated);
   const { form, pendingOnlinePayment, resetCheckout, setPendingOnlinePayment, updateForm } =
     useCheckoutStore();
@@ -347,7 +346,11 @@ export const CheckoutScreen = () => {
         <EmptyState
           title="No items ready for checkout"
           description="Your cart is empty. Add products before you continue."
-          action={<Button onPress={() => navigation.navigate("Shop")}>Browse products</Button>}
+          action={
+            <Button onPress={() => navigation.navigate("Tabs", { screen: "Shop" })}>
+              Browse products
+            </Button>
+          }
         />
       </Screen>
     );

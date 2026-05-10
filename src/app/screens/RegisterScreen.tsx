@@ -1,11 +1,12 @@
 import React from "react";
 import { Alert } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { registerUser } from "@/services/api";
 import { Button, Card, Screen, SectionHeading, TextField } from "@/components/ui";
+import { useRegisterMutation } from "@/query";
 
 export const RegisterScreen = () => {
   const navigation = useNavigation<any>();
+  const registerMutation = useRegisterMutation();
   const [form, setForm] = React.useState({
     firstName: "",
     lastName: "",
@@ -15,8 +16,6 @@ export const RegisterScreen = () => {
     password: "",
     confirmPassword: "",
   });
-  const [isSubmitting, setIsSubmitting] = React.useState(false);
-
   const handleChange = (field: keyof typeof form, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }));
   };
@@ -37,9 +36,7 @@ export const RegisterScreen = () => {
       return;
     }
 
-    setIsSubmitting(true);
-    const response = await registerUser(form);
-    setIsSubmitting(false);
+    const response = await registerMutation.mutateAsync(form);
 
     if (!response.success) {
       Alert.alert("Registration failed", response.message || "Please try again.");
@@ -51,7 +48,7 @@ export const RegisterScreen = () => {
   };
 
   return (
-    <Screen contentContainerClassName="justify-center flex-grow py-8">
+    <Screen showAppHeader={false} contentContainerClassName="justify-center flex-grow py-8">
       <Card className="gap-4">
         <SectionHeading
           eyebrow="Create account"
@@ -91,8 +88,8 @@ export const RegisterScreen = () => {
           value={form.confirmPassword}
           onChangeText={(value) => handleChange("confirmPassword", value)}
         />
-        <Button onPress={handleRegister} disabled={isSubmitting}>
-          {isSubmitting ? "Creating account..." : "Create account"}
+        <Button onPress={handleRegister} disabled={registerMutation.isPending}>
+          {registerMutation.isPending ? "Creating account..." : "Create account"}
         </Button>
       </Card>
     </Screen>

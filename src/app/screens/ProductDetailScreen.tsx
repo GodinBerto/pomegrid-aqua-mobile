@@ -4,15 +4,14 @@ import { MessageCircle, Minus, Package, Plus, Ruler, Star } from "lucide-react-n
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { ProductMedia } from "@/components/ProductMedia";
 import { AppText, Badge, Button, Card, LoadingState, Screen } from "@/components/ui";
-import { useAddToCartMutation, useProduct } from "@/hooks/useAppData";
+import { useAddToCartMutation, useProduct, useSessionUser } from "@/query";
 import { formatCurrency } from "@/lib/utils";
-import { useAuthStore } from "@/store/authStore";
 import { palette } from "@/theme";
 
 export const ProductDetailScreen = () => {
   const navigation = useNavigation<any>();
   const route = useRoute<any>();
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { isAuthenticated } = useSessionUser();
   const { data: product, isLoading, error } = useProduct(route.params?.productId);
   const addToCartMutation = useAddToCartMutation();
   const [quantity, setQuantity] = React.useState(1);
@@ -52,7 +51,11 @@ export const ProductDetailScreen = () => {
   }
 
   return (
-    <Screen contentContainerClassName="pt-2 gap-6">
+    <Screen
+      appHeaderTitle={product.title}
+      appHeaderSubtitle="Review this item before ordering"
+      contentContainerClassName="pt-2 gap-6"
+    >
       <Card className="p-0 overflow-hidden">
         <ProductMedia product={product} height={260} />
       </Card>

@@ -6,6 +6,7 @@ import {
   ArrowRight,
   Calculator,
   MessageCircle,
+  Search,
   Sprout,
   Truck,
   Wrench,
@@ -20,11 +21,8 @@ import {
   LoadingState,
   Screen,
   SectionHeading,
-  WelcomeHeader,
 } from "@/components/ui";
-import { useProducts, useSupportConversation } from "@/hooks/useAppData";
-import { getConversationUnreadCount } from "@/lib/utils";
-import { useAuthStore } from "@/store/authStore";
+import { useProducts, useSessionUser } from "@/query";
 import { palette } from "@/theme";
 
 const heroSlides = [
@@ -88,10 +86,8 @@ const highlights = [
 
 export const HomeScreen = () => {
   const navigation = useNavigation<any>();
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { user } = useSessionUser();
   const { data: products = [], isLoading } = useProducts();
-  const { data: supportConversation } = useSupportConversation(isAuthenticated);
 
   const previewProducts = React.useMemo(() => {
     const featuredProducts = products
@@ -119,20 +115,23 @@ export const HomeScreen = () => {
     return "Farmer";
   }, [user?.email, user?.full_name, user?.username]);
 
-  const unreadCount = getConversationUnreadCount(supportConversation);
-
   return (
     <Screen
+      appHeaderTitle={firstName}
       header={
-        <WelcomeHeader
-          title={firstName}
-          isAuthenticated={isAuthenticated}
-          notificationCount={unreadCount}
-          onSearchPress={() => navigation.navigate("Shop")}
-          onNotificationPress={() =>
-            navigation.navigate(isAuthenticated ? "Chat" : "Account")
-          }
-        />
+        <View className="mt-10">
+          <View>
+            <AppText weight="bold" className="mt-0.5 text-[19px] leading-9">
+              What are you looking for today?
+            </AppText>
+          </View>
+          <View className="mt-3 flex-row items-center gap-3 rounded-full border border-brand-line bg-white px-4 py-3">
+            <Search size={18} className="text-brand-subtext" />
+            <AppText className="flex-1 text-sm text-brand-subtext">
+              Search products, categories...
+            </AppText>
+          </View>
+        </View>
       }
       contentContainerClassName="gap-8 pt-2"
     >

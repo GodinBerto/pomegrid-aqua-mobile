@@ -10,17 +10,16 @@ import { MessageCircle, Send } from "lucide-react-native";
 import { AppText, AuthPrompt, Button, Card, EmptyState, LoadingState, Screen, TextField } from "@/components/ui";
 import {
   useMarkSupportConversationReadMutation,
+  useSessionUser,
   useSendSupportMessageMutation,
   useSupportChatRealtime,
   useSupportConversation,
   useSupportMessages,
-} from "@/hooks/useAppData";
+} from "@/query";
 import { getChatDayLabel } from "@/lib/utils";
-import { useAuthStore } from "@/store/authStore";
 
 export const ChatScreen = () => {
-  const user = useAuthStore((state) => state.user);
-  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const { user, isAuthenticated } = useSessionUser();
   const scrollRef = React.useRef<ScrollView>(null);
   const [message, setMessage] = React.useState("");
   const { data: conversation } = useSupportConversation(isAuthenticated);
