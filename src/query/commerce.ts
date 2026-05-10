@@ -1,11 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  addToCart,
-  getCartItems,
-  getUserOrders,
-  removeCartItem,
-  updateCartItem,
-} from "@/services/api";
+import { addToCart, getCartItems, getUserOrders, removeCartItem, updateCartItem } from "@/api";
 import { queryKeys } from "./keys";
 
 export const useCartQuery = (enabled = true) =>

@@ -21,7 +21,7 @@ import {
   Screen,
   TextField,
 } from "@/components/ui";
-import { createOrder, initializePayment, removeCartItem, verifyPayment } from "@/services/api";
+import { createOrder, initializePayment, removeCartItem, verifyPayment } from "@/api";
 import { useCartQuery, useSessionUser } from "@/query";
 import { formatCurrency } from "@/lib/utils";
 import { defaultCheckoutForm, useCheckoutStore } from "@/store/checkoutStore";

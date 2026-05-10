@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { FullScreenLoader } from "@/components/ui";
-import { clearAuthSession, hasStoredSession } from "@/services/api";
+import { clearAuthSession, hasStoredSession } from "@/api";
 import {
   clearAuthenticatedUserState,
   fetchCurrentUser,

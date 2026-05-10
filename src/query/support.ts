@@ -8,7 +8,7 @@ import {
   markSupportConversationRead,
   sendSupportMessage,
   SOCKET_BASE_URL,
-} from "@/services/api";
+} from "@/api";
 import { mapConversationMessage } from "@/lib/utils";
 import { queryKeys } from "./keys";
 

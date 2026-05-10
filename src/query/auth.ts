@@ -1,11 +1,6 @@
 import { useEffect } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import {
-  getAuthMe,
-  loginUser,
-  logoutUser,
-  registerUser,
-} from "@/services/api";
+import { getAuthMe, loginUser, logoutUser, registerUser } from "@/api";
 import { useAuthStore } from "@/store/authStore";
 import type { AuthenticatedUser } from "@/types/domain";
 import { clearAuthenticatedQueryCache, setCurrentUserCache } from "./cache";
