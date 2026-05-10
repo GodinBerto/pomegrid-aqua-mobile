@@ -69,6 +69,7 @@ const parseHostname = (value?: string | null) => {
 const resolveExpoDevHost = () => {
   const hostCandidates = [
     Constants.expoConfig?.hostUri,
+    Constants.expoGoConfig?.debuggerHost,
     Constants.linkingUri,
     Constants.experienceUrl,
   ];
@@ -299,7 +300,7 @@ const performRequest = async (
   } catch (error) {
     if (error instanceof TypeError) {
       throw new Error(
-        `Failed to reach API (${requestUrl}). Check that your backend host is reachable from the device.`,
+        `Failed to reach API (${requestUrl}). Check that your backend host is reachable from the device or emulator.`,
       );
     }
 
