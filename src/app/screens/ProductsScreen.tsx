@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Alert, ScrollView, View } from "react-native";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { PackageSearch } from "lucide-react-native";
@@ -27,7 +27,7 @@ export const ProductsScreen = () => {
   const [searchTerm, setSearchTerm] = React.useState("");
   const [sortOption, setSortOption] = React.useState<SortOption>("featured");
 
-  React.useEffect(() => {
+  useEffect(() => {
     const routeCategory = route.params?.category;
     if (routeCategory) {
       setActiveCategory(normalizeCategoryName(routeCategory) || "all");
@@ -38,7 +38,8 @@ export const ProductsScreen = () => {
     .filter((product) => {
       const matchesCategory =
         activeCategory === "all" ||
-        normalizeCategoryName(product.category).toLowerCase() === activeCategory.toLowerCase();
+        normalizeCategoryName(product.category).toLowerCase() ===
+          activeCategory.toLowerCase();
       const term = searchTerm.trim().toLowerCase();
       const matchesSearch =
         !term ||
@@ -72,7 +73,10 @@ export const ProductsScreen = () => {
       quantity: 1,
     });
 
-    Alert.alert(response.success ? "Added to cart" : "Could not add to cart", response.message);
+    Alert.alert(
+      response.success ? "Added to cart" : "Could not add to cart",
+      response.message,
+    );
   };
 
   return (
@@ -91,7 +95,11 @@ export const ProductsScreen = () => {
       />
 
       <View className="gap-3">
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="-mx-5 px-5"
+        >
           {productCategories.map((category) => (
             <Chip
               key={category}
@@ -101,16 +109,41 @@ export const ProductsScreen = () => {
             />
           ))}
         </ScrollView>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} className="-mx-5 px-5">
-          <Chip label="Featured" active={sortOption === "featured"} onPress={() => setSortOption("featured")} />
-          <Chip label="Price: Low" active={sortOption === "price-asc"} onPress={() => setSortOption("price-asc")} />
-          <Chip label="Price: High" active={sortOption === "price-desc"} onPress={() => setSortOption("price-desc")} />
-          <Chip label="A - Z" active={sortOption === "name-asc"} onPress={() => setSortOption("name-asc")} />
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          className="-mx-5 px-5"
+        >
+          <Chip
+            label="Featured"
+            active={sortOption === "featured"}
+            onPress={() => setSortOption("featured")}
+          />
+          <Chip
+            label="Price: Low"
+            active={sortOption === "price-asc"}
+            onPress={() => setSortOption("price-asc")}
+          />
+          <Chip
+            label="Price: High"
+            active={sortOption === "price-desc"}
+            onPress={() => setSortOption("price-desc")}
+          />
+          <Chip
+            label="A - Z"
+            active={sortOption === "name-asc"}
+            onPress={() => setSortOption("name-asc")}
+          />
         </ScrollView>
       </View>
 
       {isLoading ? <LoadingState label="Loading products..." /> : null}
-      {error ? <AuthPrompt title="Could not load products" description={error.message} /> : null}
+      {error ? (
+        <AuthPrompt
+          title="Could not load products"
+          description={error.message}
+        />
+      ) : null}
 
       {!isLoading && !error && filteredProducts.length === 0 ? (
         <AuthPrompt
@@ -135,13 +168,6 @@ export const ProductsScreen = () => {
             />
           ))}
         </View>
-      ) : null}
-
-      {!isAuthenticated && !isLoading ? (
-        <AuthPrompt
-          title="Want cart sync and chat?"
-          description="Sign in to unlock the API-backed cart, order history, and live support flows."
-        />
       ) : null}
     </Screen>
   );

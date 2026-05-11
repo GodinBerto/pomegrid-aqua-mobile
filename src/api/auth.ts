@@ -11,8 +11,25 @@ import type {
 import { apiRequest, clearAuthSession, setAuthSession } from "./client";
 
 const pickUserFromPayload = (payload?: Record<string, any>) =>
+  (payload && typeof payload.id !== "undefined"
+    ? (payload as AuthenticatedUser)
+    : undefined) ||
   (payload?.user as AuthenticatedUser | undefined) ||
   (payload?.data as AuthenticatedUser | undefined);
+
+const pickTokenValue = (
+  payload: Record<string, any> | undefined,
+  keys: string[],
+) => {
+  for (const key of keys) {
+    const value = payload?.[key];
+    if (typeof value === "string" && value.trim()) {
+      return value;
+    }
+  }
+
+  return undefined;
+};
 
 export const loginUser = async (payload: {
   email: string;
@@ -31,9 +48,19 @@ export const loginUser = async (payload: {
       response?.data && typeof response.data === "object"
         ? (response.data as Record<string, any>)
         : response;
-    const accessToken = responseData?.access_token;
-    const refreshToken = responseData?.refresh_token;
-    const csrfToken = responseData?.csrf_token;
+    const accessToken = pickTokenValue(responseData, [
+      "access_token",
+      "accessToken",
+      "token",
+    ]);
+    const refreshToken = pickTokenValue(responseData, [
+      "refresh_token",
+      "refreshToken",
+    ]);
+    const csrfToken = pickTokenValue(responseData, [
+      "csrf_token",
+      "csrfToken",
+    ]);
     const user = pickUserFromPayload(responseData);
 
     if (!accessToken || !user) {
@@ -115,11 +142,14 @@ export const getAuthMe = async (): Promise<
     const response = await apiRequest<
       ApiEnvelope<AuthenticatedUser | Record<string, any>>
     >("auth/me", "GET");
-    const payload = response?.data;
+    const payload =
+      response?.data && typeof response.data === "object"
+        ? (response.data as Record<string, any>)
+        : (response as Record<string, any>);
     const directUser =
-      payload && typeof payload === "object" && "id" in payload
-        ? (payload as AuthenticatedUser)
-        : pickUserFromPayload(payload as Record<string, any>);
+      payload && typeof payload === "object"
+        ? pickUserFromPayload(payload as Record<string, any>)
+        : undefined;
 
     if (!directUser) {
       return {

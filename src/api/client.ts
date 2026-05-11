@@ -1,14 +1,15 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import Constants from "expo-constants";
 import { Platform } from "react-native";
 import { clearAuthenticatedQueryCache } from "@/query/cache";
 import { useAuthStore } from "@/store/authStore";
 import { extractMessage } from "@/lib/utils";
 import type { SessionTokens } from "@/types/domain";
+import {
+  clearPersistedSession,
+  persistSessionTokens,
+  readPersistedSession,
+} from "./tokenStorage";
 
-const ACCESS_TOKEN_STORAGE_KEY = "access_token";
-const REFRESH_TOKEN_STORAGE_KEY = "refresh_token";
-const CSRF_TOKEN_STORAGE_KEY = "csrf_token";
 const REFRESH_ENDPOINT = "auth/refresh";
 
 type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
@@ -115,21 +116,6 @@ export const SOCKET_BASE_URL = resolveSocketBaseUrl();
 export const buildApiUrl = (endpoint: string) =>
   `${API_BASE_URL}${normalizeEndpoint(endpoint)}`;
 
-const readPersistedSession = async (): Promise<SessionTokens> => {
-  const entries = await AsyncStorage.multiGet([
-    ACCESS_TOKEN_STORAGE_KEY,
-    REFRESH_TOKEN_STORAGE_KEY,
-    CSRF_TOKEN_STORAGE_KEY,
-  ]);
-  const lookup = Object.fromEntries(entries) as Record<string, string | null>;
-
-  return {
-    accessToken: lookup[ACCESS_TOKEN_STORAGE_KEY] || undefined,
-    refreshToken: lookup[REFRESH_TOKEN_STORAGE_KEY] || undefined,
-    csrfToken: lookup[CSRF_TOKEN_STORAGE_KEY] || undefined,
-  };
-};
-
 export const getStoredSession = async () => {
   if (inMemorySession) return inMemorySession;
   inMemorySession = await readPersistedSession();
@@ -155,11 +141,11 @@ export const setAuthSession = async (
   };
   refreshFailed = false;
 
-  await AsyncStorage.multiSet([
-    [ACCESS_TOKEN_STORAGE_KEY, accessToken],
-    [REFRESH_TOKEN_STORAGE_KEY, refreshToken || ""],
-    [CSRF_TOKEN_STORAGE_KEY, csrfToken || ""],
-  ]);
+  await persistSessionTokens({
+    accessToken,
+    refreshToken,
+    csrfToken,
+  });
 };
 
 export const clearAuthSession = async () => {
@@ -170,11 +156,7 @@ export const clearAuthSession = async () => {
   };
   refreshFailed = false;
 
-  await AsyncStorage.multiRemove([
-    ACCESS_TOKEN_STORAGE_KEY,
-    REFRESH_TOKEN_STORAGE_KEY,
-    CSRF_TOKEN_STORAGE_KEY,
-  ]);
+  await clearPersistedSession();
 
   clearAuthenticatedQueryCache();
   useAuthStore.getState().signOutLocal();

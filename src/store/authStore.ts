@@ -1,6 +1,6 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
 import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
+import { localAppStorage } from "@/lib/platformStorage";
 import type { AuthenticatedUser } from "@/types/domain";
 
 type AuthState = {
@@ -38,7 +38,7 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: "pomegrid-auth-store",
-      storage: createJSONStorage(() => AsyncStorage),
+      storage: createJSONStorage(() => localAppStorage),
       partialize: (state) => ({
         user: state.user,
         isAuthenticated: state.isAuthenticated,
